@@ -70,10 +70,12 @@ function setupAuthListeners() {
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             try {
-                const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+                const userDocRef = doc(db, "usuarios", user.uid);
+                const userDoc = await getDoc(userDocRef);
                 
                 if (userDoc.exists()) {
-                    currentUserRole = userDoc.data().rol;
+                    const data = userDoc.data();
+                    currentUserRole = data.rol ? String(data.rol).toLowerCase().trim() : "secretaria";
                 } else {
                     currentUserRole = "secretaria"; 
                 }
@@ -85,7 +87,7 @@ function setupAuthListeners() {
             const emailElem = document.getElementById("userDisplayEmail");
             const roleElem = document.getElementById("userDisplayRole");
             if (emailElem) emailElem.innerText = user.email;
-            if (roleElem) roleElem.innerText = currentUserRole;
+            if (roleElem) roleElem.innerText = currentUserRole.toUpperCase();
 
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("app-screen").style.display = "block";
