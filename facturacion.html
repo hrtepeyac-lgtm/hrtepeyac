@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Facturación - Hospital Rosa del Tepeyac</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --bg-flat: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --input-bg: #ffffff;
+            --focus-ring: rgba(2, 132, 199, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-flat);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 16px;
+            color: var(--text-main);
+        }
+
+        .flat-container {
+            max-width: 640px;
+            width: 100%;
+        }
+
+        .portal-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: auto;
+            max-height: 80px;
+            margin-bottom: 12px;
+        }
+
+        .brand-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .portal-header h1 {
+            color: var(--text-main);
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .badge-cfdi {
+            display: inline-block;
+            background: #e0f2fe;
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 4px;
+        }
+
+        form {
+            width: 100%;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 520px) {
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .form-group.full-width {
+                grid-column: span 2;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease-in-out;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        .btn-submit {
+            margin-top: 28px;
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        #cliStatusMsg {
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: left;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flat-container">
+        <div class="portal-header">
+            <div class="brand-logo">
+                <img src="ITEMS/logo.jpeg" alt="Logo Hospital Rosa del Tepeyac">
+            </div>
+            <h1>Hospital Rosa del Tepeyac</h1>
+            <span class="badge-cfdi">Portal de Facturación Electrónica CFDI 4.0</span>
+        </div>
+
+        <form id="formPortalFacturacion">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="cliTicketId">N° de Ticket ID</label>
+                    <input type="text" id="cliTicketId" required placeholder="Ej. TCK-84920" style="text-transform:uppercase;">
+                </div>
+
+                <div class="form-group">
+                    <label for="cliRfc">RFC Receptor</label>
+                    <input type="text" id="cliRfc" required placeholder="Ej. XAXX010101000" style="text-transform:uppercase;">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="cliNombre">Nombre Completo o Razón Social</label>
+                    <input type="text" id="cliNombre" required placeholder="Ej. Juan Pérez López">
+                </div>
+
+                <div class="form-group">
+                    <label for="cliCp">Código Postal Fiscal</label>
+                    <input type="text" id="cliCp" required placeholder="Ej. 55000">
+                </div>
+
+                <div class="form-group">
+                    <label for="cliUsoCfdi">Uso de CFDI</label>
+                    <select id="cliUsoCfdi" required>
+                        <option value="D01 - Gastos médicos, dentales y hospitalarios">D01 - Gastos médicos y dentales</option>
+                        <option value="G03 - Gastos en general">G03 - Gastos en general</option>
+                        <option value="CP01 - Pagos">CP01 - Pagos</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Validar Ticket y Generar Factura
+            </button>
+        </form>
+
+        <div id="cliStatusMsg"></div>
+    </div>
+
+    <script type="module">
+        import { db, collection, getDocs } from "./JS/firebase-config.js";
+
+        document.getElementById("formPortalFacturacion").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const ticketInput = document.getElementById("cliTicketId").value.trim().toUpperCase();
+            const rfc = document.getElementById("cliRfc").value.trim().toUpperCase();
+            const nombre = document.getElementById("cliNombre").value.trim();
+            const cp = document.getElementById("cliCp").value.trim();
+            const usoCfdi = document.getElementById("cliUsoCfdi").value;
+            const statusDiv = document.getElementById("cliStatusMsg");
+
+            statusDiv.style.display = "block";
+            statusDiv.style.background = "#f1f5f9";
+            statusDiv.style.color = "#334155";
+            statusDiv.style.borderLeft = "4px solid #94a3b8";
+            statusDiv.innerText = "Buscando ticket en la base de datos del hospital...";
+
+            try {
+                const ventasSnap = await getDocs(collection(db, "ventas"));
+                let ticketEncontrado = null;
+
+                ventasSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.ticketId && data.ticketId.toUpperCase() === ticketInput) {
+                        ticketEncontrado = data;
+                    }
+                });
+
+                if (!ticketEncontrado) {
+                    statusDiv.style.background = "#fef2f2";
+                    statusDiv.style.color = "#991b1b";
+                    statusDiv.style.borderLeft = "4px solid #ef4444";
+                    statusDiv.innerText = "Ticket no encontrado. Verifique el Ticket ID e intente de nuevo.";
+                    return;
+                }
+
+                statusDiv.style.background = "#f0fdf4";
+                statusDiv.style.color = "#166534";
+                statusDiv.style.borderLeft = "4px solid #22c55e";
+                statusDiv.innerText = "Ticket validado con éxito. Generando documento PDF...";
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+
+                pdf.setFontSize(18);
+                pdf.text("HOSPITAL ROSA DEL TEPEYAC", 20, 20);
+                pdf.setFontSize(10);
+                pdf.text("RFC: HRT900101XXX | Régimen Fiscal: 601 General de Ley Personas Morales", 20, 26);
+                pdf.text("Comprobante Fiscal Digital por Internet (CFDI 4.0)", 20, 32);
+                pdf.line(20, 35, 190, 35);
+
+                pdf.setFontSize(11);
+                pdf.text(`DATOS DEL RECEPTOR:`, 20, 45);
+                pdf.setFontSize(10);
+                pdf.text(`RFC: ${rfc}`, 20, 52);
+                pdf.text(`Razón Social: ${nombre}`, 20, 58);
+                pdf.text(`C.P. Fiscal: ${cp}`, 20, 64);
+                pdf.text(`Uso CFDI: ${usoCfdi}`, 20, 70);
+
+                pdf.text(`DATOS DE LA COMPRA:`, 120, 45);
+                pdf.text(`Ticket ID: ${ticketEncontrado.ticketId}`, 120, 52);
+                pdf.text(`Fecha Compra: ${ticketEncontrado.fecha}`, 120, 58);
+                pdf.text(`Método Pago: ${ticketEncontrado.metodoPago}`, 120, 64);
+
+                pdf.line(20, 75, 190, 75);
+                pdf.setFontSize(11);
+                pdf.text("DESGLOSE DE CONCEPTOS", 20, 83);
+
+                let y = 92;
+                pdf.setFontSize(9);
+                pdf.text("Descripción", 20, y);
+                pdf.text("Cant.", 120, y);
+                pdf.text("Precio U.", 140, y);
+                pdf.text("Importe", 170, y);
+                pdf.line(20, y + 2, 190, y + 2);
+
+                y += 8;
+                ticketEncontrado.items.forEach(item => {
+                    pdf.text(`${item.desc}`, 20, y);
+                    pdf.text(`${item.cant}`, 120, y);
+                    pdf.text(`$${item.precio.toFixed(2)}`, 140, y);
+                    pdf.text(`$${item.subtotal.toFixed(2)}`, 170, y);
+                    y += 6;
+                });
+
+                pdf.line(20, y, 190, y);
+                y += 8;
+
+                const subtotal = ticketEncontrado.total / 1.16;
+                const iva = ticketEncontrado.total - subtotal;
+
+                pdf.setFontSize(10);
+                pdf.text(`Subtotal: $${subtotal.toFixed(2)} MXN`, 130, y);
+                pdf.text(`IVA (16%): $${iva.toFixed(2)} MXN`, 130, y + 6);
+                pdf.setFontSize(12);
+                pdf.text(`TOTAL FACTURADO: $${ticketEncontrado.total.toFixed(2)} MXN`, 130, y + 14);
+
+                pdf.setFontSize(8);
+                pdf.text("Sello Digital SAT: 9F8E7D6C-5B4A-3210-9876-FEDCBA098765", 20, y + 30);
+                pdf.text("Cadena Original: ||1.1|HRT900101XXX|FACTURA|" + ticketEncontrado.ticketId + "||", 20, y + 35);
+
+                pdf.save(`Factura_${ticketEncontrado.ticketId}_${rfc}.pdf`);
+
+            } catch (err) {
+                console.error(err);
+                statusDiv.style.background = "#fef2f2";
+                statusDiv.style.color = "#991b1b";
+                statusDiv.style.borderLeft = "4px solid #ef4444";
+                statusDiv.innerText = "Error al conectar con el servidor.";
+            }
+        });
+    </script>
+</body>
+
+</html>
