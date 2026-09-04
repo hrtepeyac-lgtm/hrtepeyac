@@ -11,12 +11,15 @@ import {
     doc, 
     setDoc,
     updateDoc, 
-    deleteDoc,
-    onSnapshot 
+    onSnapshot
 } from "./firebase-config.js";
 
 let currentUserRole = null;
 let cajaActualItems = [];
+
+// Variables para desuscribir listeners en tiempo real y evitar fugas de memoria
+let unsubscribeConsultas = null;
+let unsubscribeInventario = null;
 
 const consultasRef = collection(db, "consultas");
 const inventarioRef = collection(db, "inventario");
@@ -31,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
         inputFecha.value = new Date().toISOString().split('T')[0];
     }
 
-    // Restringe la fecha mínima en el input HTML al día de hoy
     const inputCaducidad = document.getElementById("invCaducidad");
     if (inputCaducidad) {
         const hoy = new Date().toISOString().split('T')[0];
@@ -75,6 +77,10 @@ function setupAuthListeners() {
             configureUIByRole(currentUserRole);
             initRealtimeData();
         } else {
+            // Cancelar suscripciones al cerrar sesión
+            if (unsubscribeConsultas) unsubscribeConsultas();
+            if (unsubscribeInventario) unsubscribeInventario();
+
             document.getElementById("login-screen").style.display = "flex";
             document.getElementById("app-screen").style.display = "none";
         }
@@ -89,11 +95,11 @@ function configureUIByRole(role) {
 
     if (role === "secretaria") {
         nav.innerHTML = '<button class="tab-btn active" data-mod="sec-mod">Recepción (Secretaría)</button>';
-        document.getElementById("sec-mod").classList.add("active");
+        document.getElementById("sec-mod")?.classList.add("active");
     } 
     else if (role === "farmacia") {
         nav.innerHTML = '<button class="tab-btn active" data-mod="farm-mod">Farmacia, Caja e Inventario</button>';
-        document.getElementById("farm-mod").classList.add("active");
+        document.getElementById("farm-mod")?.classList.add("active");
     } 
     else if (role === "admin") {
         nav.innerHTML = `
@@ -101,35 +107,34 @@ function configureUIByRole(role) {
             <button class="tab-btn" data-mod="sec-mod">Recepción</button>
             <button class="tab-btn" data-mod="farm-mod">Farmacia / Inventario</button>
         `;
-        document.getElementById("adm-mod").classList.add("active");
+        document.getElementById("adm-mod")?.classList.add("active");
 
         nav.querySelectorAll(".tab-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 nav.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
                 document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
                 btn.classList.add("active");
-                document.getElementById(btn.getAttribute("data-mod")).classList.add("active");
+                document.getElementById(btn.getAttribute("data-mod"))?.classList.add("active");
             });
         });
     }
 }
 
 function setupEventListeners() {
-    document.getElementById("consultaTipo").addEventListener("change", (e) => {
+    document.getElementById("consultaTipo")?.addEventListener("change", (e) => {
         const selected = e.target.options[e.target.selectedIndex];
-        document.getElementById("costoConsulta").value = selected.getAttribute("data-costo");
+        document.getElementById("costoConsulta").value = selected.getAttribute("data-costo") || 0;
     });
 
-    document.getElementById("formConsulta").addEventListener("submit", guardarConsulta);
+    document.getElementById("formConsulta")?.addEventListener("submit", guardarConsulta);
     
-    // Botón para agregar medicamento con la cantidad especificada
     const btnAgregarMed = document.getElementById("btnAgregarMed");
     if (btnAgregarMed) {
         btnAgregarMed.addEventListener("click", agregarMedicamentoACaja);
     }
 
-    document.getElementById("btnProcessPayment").addEventListener("click", procesarCobroFirestore);
-    document.getElementById("formInventario").addEventListener("submit", guardarInventarioFirestore);
+    document.getElementById("btnProcessPayment")?.addEventListener("click", procesarCobroFirestore);
+    document.getElementById("formInventario")?.addEventListener("submit", guardarInventarioFirestore);
     document.getElementById("btnGenerarReporteContable")?.addEventListener("click", generarReporteContableTurno);
     document.getElementById("btnGenerarReporteInegi")?.addEventListener("click", generarReporteInegiPDF);
     document.getElementById("btnPrintTicketNow")?.addEventListener("click", () => window.print());
@@ -138,16 +143,18 @@ function setupEventListeners() {
 async function guardarConsulta(e) {
     e.preventDefault();
     const folio = "FOL-" + Math.floor(1000 + Math.random() * 9000);
+    const ahora = new Date();
     
     const consultaData = {
         folio: folio,
-        paciente: document.getElementById("pacienteNombre").value,
+        paciente: document.getElementById("pacienteNombre").value.trim(),
         servicio: document.getElementById("consultaTipo").value,
         medico: document.getElementById("medicoSelect").value,
         consultorio: document.getElementById("consultorio").value,
         costo: parseFloat(document.getElementById("costoConsulta").value),
         estado: "PENDIENTE",
-        fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString()
+        fecha: meformatearFechaISO(ahora),
+        fechaFormateada: ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString()
     };
 
     try {
@@ -174,13 +181,12 @@ async function guardarInventarioFirestore(e) {
     e.preventDefault();
 
     const caducidadValor = document.getElementById("invCaducidad").value;
-    
     const fechaCaducidad = new Date(caducidadValor + "T00:00:00");
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
     if (fechaCaducidad < hoy) {
-        alert("Error: No se pueden registrar o actualizar medicamentos caducados (fecha anterior al día de hoy).");
+        alert("Error: No se pueden registrar o actualizar medicamentos caducados.");
         return;
     }
 
@@ -236,13 +242,12 @@ function agregarMedicamentoACaja() {
     const precio = parseFloat(selectedOption.getAttribute("data-precio"));
     const stockActual = parseInt(selectedOption.getAttribute("data-stock"));
 
-    // Verificar si ya existe en el carrito para sumar la cantidad solicitada
     const itemExistente = cajaActualItems.find(i => i.id === id && i.tipo === "MEDICAMENTO");
     const cantidadEnCarrito = itemExistente ? itemExistente.cant : 0;
     const cantidadTotalSolicitada = cantidadEnCarrito + cantidadDeseada;
 
     if (cantidadTotalSolicitada > stockActual) {
-        return alert(`Stock insuficiente. Stock disponible: ${stockActual} (Ya tienes ${cantidadEnCarrito} en la caja).`);
+        return alert(`Stock insuficiente. Disponible: ${stockActual} (En caja: ${cantidadEnCarrito}).`);
     }
 
     if (itemExistente) {
@@ -259,7 +264,6 @@ function agregarMedicamentoACaja() {
         });
     }
 
-    // Restablecer campos
     select.value = "";
     if (inputCant) inputCant.value = 1;
 
@@ -268,6 +272,8 @@ function agregarMedicamentoACaja() {
 
 function renderTablaCaja() {
     const tbody = document.getElementById("cajaItems");
+    if (!tbody) return;
+    
     tbody.innerHTML = "";
     let total = 0;
 
@@ -281,7 +287,7 @@ function renderTablaCaja() {
         total += item.subtotal;
         tbody.innerHTML += `
             <tr>
-                <td>${item.desc}</td>
+                <td>${escapeHTML(item.desc)}</td>
                 <td>${item.cant}</td>
                 <td>$${item.precio.toFixed(2)}</td>
                 <td>$${item.subtotal.toFixed(2)}</td>
@@ -301,7 +307,7 @@ async function procesarCobroFirestore() {
     const total = cajaActualItems.reduce((acc, i) => acc + i.subtotal, 0);
     const metodoPago = document.getElementById("cajaMetodoPago").value;
     const ticketId = "TCK-" + Math.floor(10000 + Math.random() * 90000);
-    const fechaHora = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+    const ahora = new Date();
 
     try {
         await addDoc(ventasRef, {
@@ -310,7 +316,8 @@ async function procesarCobroFirestore() {
             items: cajaActualItems,
             total: total,
             metodoPago: metodoPago,
-            fecha: fechaHora
+            fechaISO: meformatearFechaISO(ahora),
+            fechaFormateada: ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString()
         });
 
         for (let item of cajaActualItems) {
@@ -328,15 +335,21 @@ async function procesarCobroFirestore() {
 
         document.getElementById("tckId").innerText = ticketId;
         document.getElementById("tckCliente").innerText = clienteNombre;
-        document.getElementById("tckFecha").innerText = fechaHora;
+        document.getElementById("tckFecha").innerText = meformatearFechaISO(ahora);
         document.getElementById("tckPago").innerText = metodoPago;
         document.getElementById("tckTotal").innerText = total.toFixed(2);
 
         const detalleDiv = document.getElementById("tckDetalleItems");
-        detalleDiv.innerHTML = "";
-        cajaActualItems.forEach(i => {
-            detalleDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin:2px 0;"><span>${i.cant}x ${i.desc}</span><span>$${i.subtotal.toFixed(2)}</span></div>`;
-        });
+        if (detalleDiv) {
+            detalleDiv.innerHTML = "";
+            cajaActualItems.forEach(i => {
+                detalleDiv.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; margin:2px 0;">
+                        <span>${i.cant}x ${escapeHTML(i.desc)}</span>
+                        <span>$${i.subtotal.toFixed(2)}</span>
+                    </div>`;
+            });
+        }
 
         document.getElementById("ticketClienteImprimir").style.display = "block";
         cajaActualItems = [];
@@ -347,44 +360,92 @@ async function procesarCobroFirestore() {
 }
 
 async function generarReporteContableTurno() {
-    alert("Generando reporte contable...");
+    const inputFecha = document.getElementById("reporteFecha");
+    const fechaSeleccionada = inputFecha ? inputFecha.value : new Date().toISOString().split('T')[0];
+
+    try {
+        const querySnapshot = await getDocs(ventasRef);
+        let totalGeneral = 0;
+        let desgloseMetodos = {};
+        let listaVentas = [];
+
+        querySnapshot.forEach((docSnap) => {
+            const venta = docSnap.data();
+            // Filtrar por fecha ISO guardada o comparar por fecha parcial
+            if (venta.fechaISO === fechaSeleccionada || (venta.fechaFormateada && venta.fechaFormateada.includes(fechaSeleccionada))) {
+                totalGeneral += venta.total || 0;
+                
+                const metodo = venta.metodoPago || "Efectivo";
+                desgloseMetodos[metodo] = (desgloseMetodos[metodo] || 0) + venta.total;
+                listaVentas.push(venta);
+            }
+        });
+
+        // Contenedor de salida del reporte (si existe en tu HTML)
+        const contenedorReporte = document.getElementById("reporteContableResultado");
+        if (contenedorReporte) {
+            let desgloseHTML = Object.entries(desgloseMetodos)
+                .map(([metodo, monto]) => `<li><strong>${escapeHTML(metodo)}:</strong> $${monto.toFixed(2)}</li>`)
+                .join("");
+
+            contenedorReporte.innerHTML = `
+                <div class="card p-3 my-3">
+                    <h4>Reporte Contable del Día (${fechaSeleccionada})</h4>
+                    <p><strong>Total Recaudado:</strong> $${totalGeneral.toFixed(2)}</p>
+                    <h5>Desglose por método de pago:</h5>
+                    <ul>${desgloseHTML || "<li>No hay ventas registradas</li>"}</ul>
+                    <p><strong>Total de transacciones:</strong> ${listaVentas.length}</p>
+                </div>
+            `;
+        } else {
+            alert(`Reporte (${fechaSeleccionada}):\nTotal Recaudado: $${totalGeneral.toFixed(2)}\nTotal Operaciones: ${listaVentas.length}`);
+        }
+
+    } catch (err) {
+        alert("Error al generar el reporte contable.");
+    }
 }
 
 function generarReporteInegiPDF() {
-    alert("Generando boleta INEGI...");
     window.print();
 }
 
 function initRealtimeData() {
-    onSnapshot(consultasRef, (snapshot) => {
+    // Si existen listeners previos, desuscribirlos para no duplicar eventos
+    if (unsubscribeConsultas) unsubscribeConsultas();
+    if (unsubscribeInventario) unsubscribeInventario();
+
+    unsubscribeConsultas = onSnapshot(consultasRef, (snapshot) => {
         const tablaConsultas = document.getElementById("tablaConsultasPendientes");
-        if (tablaConsultas) tablaConsultas.innerHTML = "";
+        if (!tablaConsultas) return;
+
+        tablaConsultas.innerHTML = "";
 
         snapshot.forEach((docSnap) => {
             const c = docSnap.data();
             const docId = docSnap.id;
 
-            if (tablaConsultas && c.estado === 'PENDIENTE') {
+            if (c.estado === 'PENDIENTE') {
                 tablaConsultas.innerHTML += `
                     <tr>
-                        <td>${c.folio || "N/A"}</td>
-                        <td>${c.paciente}</td>
-                        <td>${c.servicio}</td>
+                        <td>${escapeHTML(c.folio || "N/A")}</td>
+                        <td>${escapeHTML(c.paciente)}</td>
+                        <td>${escapeHTML(c.servicio)}</td>
                         <td>$${c.costo.toFixed(2)}</td>
                         <td>
-                            <button class="btn btn-sm btn-success" onclick="cargarOrdenACaja('${docId}', '${c.servicio}', '${c.paciente}', ${c.costo})">Cobrar</button>
+                            <button class="btn btn-sm btn-success" onclick="cargarOrdenACaja('${docId}', '${escapeHTML(c.servicio)}', '${escapeHTML(c.paciente)}', ${c.costo})">Cobrar</button>
                         </td>
                     </tr>
                 `;
             }
         });
 
-        if (tablaConsultas && tablaConsultas.innerHTML === "") {
+        if (tablaConsultas.innerHTML === "") {
             tablaConsultas.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No hay consultas pendientes de pago</td></tr>`;
         }
     });
 
-    onSnapshot(inventarioRef, (snapshot) => {
+    unsubscribeInventario = onSnapshot(inventarioRef, (snapshot) => {
         const tablaInv = document.getElementById("tablaInventarioBody");
         const selectMed = document.getElementById("selectMedPrescription");
 
@@ -399,10 +460,10 @@ function initRealtimeData() {
             if (tablaInv) {
                 tablaInv.innerHTML += `
                     <tr class="${bajoStock ? 'row-alert' : ''}">
-                        <td>${item.codigo}</td>
-                        <td>${item.nombre}</td>
-                        <td>${item.categoria}</td>
-                        <td>${item.ubicacion}</td>
+                        <td>${escapeHTML(item.codigo)}</td>
+                        <td>${escapeHTML(item.nombre)}</td>
+                        <td>${escapeHTML(item.categoria)}</td>
+                        <td>${escapeHTML(item.ubicacion)}</td>
                         <td>$${parseFloat(item.precio).toFixed(2)}</td>
                         <td>${item.stock}</td>
                         <td>${item.minStock}</td>
@@ -413,11 +474,26 @@ function initRealtimeData() {
 
             if (selectMed) {
                 selectMed.innerHTML += `
-                    <option value="${id}" data-nombre="${item.nombre}" data-precio="${item.precio}" data-stock="${item.stock}">
-                        ${item.nombre} - $${item.precio} (Stock: ${item.stock})
+                    <option value="${id}" data-nombre="${escapeHTML(item.nombre)}" data-precio="${item.precio}" data-stock="${item.stock}">
+                        ${escapeHTML(item.nombre)} - $${item.precio} (Stock: ${item.stock})
                     </option>
                 `;
             }
         });
     });
+}
+
+// Funciones Auxiliares
+function meformatearFechaISO(date) {
+    return date.toISOString().split('T')[0];
+}
+
+function escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
