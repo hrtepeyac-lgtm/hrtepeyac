@@ -41,35 +41,52 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function setupAuthListeners() {
-    document.getElementById("formLogin").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("loginEmail").value;
-        const pass = document.getElementById("loginPassword").value;
-        const errDiv = document.getElementById("loginError");
+    const formLogin = document.getElementById("formLogin");
+    if (formLogin) {
+        formLogin.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("loginEmail").value.trim();
+            const pass = document.getElementById("loginPassword").value;
+            const errDiv = document.getElementById("loginError");
 
-        try {
-            errDiv.style.display = "none";
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (err) {
-            errDiv.innerText = "Error: Credenciales inválidas.";
-            errDiv.style.display = "block";
-        }
-    });
+            try {
+                if (errDiv) errDiv.style.display = "none";
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                console.error("Error al iniciar sesión:", err);
+                if (errDiv) {
+                    errDiv.innerText = `Error (${err.code}): Credenciales o configuración inválidas.`;
+                    errDiv.style.display = "block";
+                }
+            }
+        });
+    }
 
-    document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
+    const btnLogout = document.getElementById("btnLogout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => signOut(auth));
+    }
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-            
-            if (userDoc.exists()) {
-                currentUserRole = userDoc.data().rol;
-            } else {
-                currentUserRole = "secretaria"; 
+            try {
+                const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+                
+                if (userDoc.exists()) {
+                    currentUserRole = userDoc.data().rol;
+                } else {
+                    currentUserRole = "secretaria"; 
+                }
+            } catch (error) {
+                console.error("Error consultando rol de usuario:", error);
+                currentUserRole = "secretaria";
             }
 
-            document.getElementById("userDisplayEmail").innerText = user.email;
-            document.getElementById("userDisplayRole").innerText = currentUserRole;
+            const emailElem = document.getElementById("userDisplayEmail");
+            const roleElem = document.getElementById("userDisplayRole");
+            if (emailElem) emailElem.innerText = user.email;
+            if (roleElem) roleElem.innerText = currentUserRole;
+
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("app-screen").style.display = "block";
 
@@ -87,6 +104,7 @@ function setupAuthListeners() {
 
 function configureUIByRole(role) {
     const nav = document.getElementById("mainNav");
+    if (!nav) return;
     nav.innerHTML = "";
 
     document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
