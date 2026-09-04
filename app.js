@@ -17,7 +17,6 @@ import {
 let currentUserRole = null;
 let cajaActualItems = [];
 
-// Variables para desuscribir listeners en tiempo real y evitar fugas de memoria
 let unsubscribeConsultas = null;
 let unsubscribeInventario = null;
 
@@ -77,7 +76,6 @@ function setupAuthListeners() {
             configureUIByRole(currentUserRole);
             initRealtimeData();
         } else {
-            // Cancelar suscripciones al cerrar sesión
             if (unsubscribeConsultas) unsubscribeConsultas();
             if (unsubscribeInventario) unsubscribeInventario();
 
@@ -371,7 +369,6 @@ async function generarReporteContableTurno() {
 
         querySnapshot.forEach((docSnap) => {
             const venta = docSnap.data();
-            // Filtrar por fecha ISO guardada o comparar por fecha parcial
             if (venta.fechaISO === fechaSeleccionada || (venta.fechaFormateada && venta.fechaFormateada.includes(fechaSeleccionada))) {
                 totalGeneral += venta.total || 0;
                 
@@ -381,7 +378,6 @@ async function generarReporteContableTurno() {
             }
         });
 
-        // Contenedor de salida del reporte (si existe en tu HTML)
         const contenedorReporte = document.getElementById("reporteContableResultado");
         if (contenedorReporte) {
             let desgloseHTML = Object.entries(desgloseMetodos)
@@ -411,7 +407,6 @@ function generarReporteInegiPDF() {
 }
 
 function initRealtimeData() {
-    // Si existen listeners previos, desuscribirlos para no duplicar eventos
     if (unsubscribeConsultas) unsubscribeConsultas();
     if (unsubscribeInventario) unsubscribeInventario();
 
@@ -483,7 +478,6 @@ function initRealtimeData() {
     });
 }
 
-// Funciones Auxiliares
 function meformatearFechaISO(date) {
     return date.toISOString().split('T')[0];
 }
