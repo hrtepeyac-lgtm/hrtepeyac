@@ -17,8 +17,7 @@ import {
     deleteDoc,
     onSnapshot, 
     query, 
-    where,
-    Timestamp 
+    where 
 } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -50,6 +49,5 @@ export {
     deleteDoc,
     onSnapshot, 
     query, 
-    where,
-    Timestamp 
+    where 
 };
