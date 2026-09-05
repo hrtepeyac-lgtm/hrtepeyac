@@ -1,468 +1,537 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-    auth,
-    signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    db, 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { 
+    getFirestore, 
+    doc, 
+    getDoc, 
     collection, 
     addDoc, 
-    getDocs, 
-    getDoc,
-    doc, 
-    setDoc,
     updateDoc, 
-    deleteDoc,
-    onSnapshot 
-} from "./firebase-config.js";
+    deleteDoc, 
+    onSnapshot, 
+    query, 
+    orderBy, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
 
-let currentUserRole = null;
-let cajaActualItems = [];
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const consultasRef = collection(db, "consultas");
-const inventarioRef = collection(db, "inventario");
-const ventasRef = collection(db, "ventas");
+let currentUser = null;
+let currentRole = null;
+let unsubscribeInventario = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    setupAuthListeners();
-    setupEventListeners();
-    
-    const inputFecha = document.getElementById("reporteFecha");
-    if (inputFecha) {
-        inputFecha.value = new Date().toISOString().split('T')[0];
+    const loginForm = document.getElementById("login-form");
+    if (loginForm) {
+        loginForm.addEventListener("submit", handleLogin);
     }
 
-    const inputCaducidad = document.getElementById("invCaducidad");
-    if (inputCaducidad) {
-        const hoy = new Date().toISOString().split('T')[0];
-        inputCaducidad.setAttribute("min", hoy);
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", handleLogout);
     }
-});
 
-function setupAuthListeners() {
-    const formLogin = document.getElementById("formLogin");
-    if (formLogin) {
-        formLogin.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = document.getElementById("loginEmail").value;
-            const pass = document.getElementById("loginPassword").value;
-            const errDiv = document.getElementById("loginError");
-
-           try {
-    if (errDiv) errDiv.style.display = "none";
-    await signInWithEmailAndPassword(auth, email, pass);
-} catch (err) {
-    if (errDiv) {
-        errDiv.innerText = "Error: Credenciales inválidas.";
-        errDiv.style.display = "block";
-    }
-}
+    const navTabs = document.querySelectorAll(".tab-btn");
+    navTabs.forEach(tab => {
+        tab.addEventListener("click", (e) => {
+            const targetModule = e.target.getAttribute("data-module");
+            if (targetModule) switchTab(targetModule);
         });
+    });
+
+    const formPacientes = document.getElementById("form-pacientes");
+    if (formPacientes) {
+        formPacientes.addEventListener("submit", handleGuardarPaciente);
     }
 
-    const btnLogout = document.getElementById("btnLogout");
-    if (btnLogout) {
-        btnLogout.addEventListener("click", () => signOut(auth));
+    const formCitas = document.getElementById("form-citas");
+    if (formCitas) {
+        formCitas.addEventListener("submit", handleGuardarCita);
+    }
+
+    const formInventario = document.getElementById("form-inventario");
+    if (formInventario) {
+        formInventario.addEventListener("submit", handleGuardarMedicamento);
+    }
+
+    const formCobros = document.getElementById("form-cobros");
+    if (formCobros) {
+        formCobros.addEventListener("submit", handleGuardarCobro);
+    }
+
+    const btnImprimirTicket = document.getElementById("btn-imprimir-ticket");
+    if (btnImprimirTicket) {
+        btnImprimirTicket.addEventListener("click", () => window.print());
     }
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            try {
-                const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-                if (userDoc.exists()) {
-                    currentUserRole = userDoc.data().rol;
-                } else {
-                    currentUserRole = "secretaria"; 
-                }
-            } catch (error) {
-                console.error("Error al obtener el rol del usuario:", error);
-                currentUserRole = "secretaria";
-            }
-
-            const displayEmail = document.getElementById("userDisplayEmail");
-            const displayRole = document.getElementById("userDisplayRole");
-            const loginScreen = document.getElementById("login-screen");
-            const appScreen = document.getElementById("app-screen");
-
-            if (displayEmail) displayEmail.innerText = user.email;
-            if (displayRole) displayRole.innerText = currentUserRole;
-            if (loginScreen) loginScreen.style.display = "none";
-            if (appScreen) appScreen.style.display = "block";
-
-            configureUIByRole(currentUserRole);
-            initRealtimeData();
+            currentUser = user;
+            await cargarRolUsuario(user.uid);
+            configurarInterfaz();
         } else {
-            const loginScreen = document.getElementById("login-screen");
-            const appScreen = document.getElementById("app-screen");
-            if (loginScreen) loginScreen.style.display = "flex";
-            if (appScreen) appScreen.style.display = "none";
+            currentUser = null;
+            currentRole = null;
+            mostrarPantallaLogin();
         }
     });
-}
+});
 
-function configureUIByRole(role) {
-    const nav = document.getElementById("mainNav");
-    if (!nav) return;
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById("login-email").value.trim();
+    const pass = document.getElementById("login-password").value.trim();
+    const errDiv = document.getElementById("login-error");
 
-    nav.innerHTML = "";
-    document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
-
-    if (role === "secretaria") {
-        nav.innerHTML = '<button class="tab-btn active" data-mod="sec-mod">Recepción (Secretaría)</button>';
-        document.getElementById("sec-mod")?.classList.add("active");
-    } 
-    else if (role === "farmacia") {
-        nav.innerHTML = '<button class="tab-btn active" data-mod="farm-mod">Farmacia, Caja e Inventario</button>';
-        document.getElementById("farm-mod")?.classList.add("active");
-    } 
-    else if (role === "admin") {
-        nav.innerHTML = `
-            <button class="tab-btn active" data-mod="adm-mod">Reportes y Contabilidad</button>
-            <button class="tab-btn" data-mod="sec-mod">Recepción</button>
-            <button class="tab-btn" data-mod="farm-mod">Farmacia / Inventario</button>
-        `;
-        document.getElementById("adm-mod")?.classList.add("active");
-
-        nav.querySelectorAll(".tab-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                nav.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-                document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
-                btn.classList.add("active");
-                const targetMod = btn.getAttribute("data-mod");
-                if (targetMod) {
-                    document.getElementById(targetMod)?.classList.add("active");
-                }
-            });
-        });
+    try {
+        if (errDiv) errDiv.style.display = "none";
+        await signInWithEmailAndPassword(auth, email, pass);
+    } catch (err) {
+        console.error("Error al iniciar sesión:", err);
+        if (errDiv) {
+            errDiv.innerText = "Error: Credenciales inválidas o problema de conexión.";
+            errDiv.style.display = "block";
+        }
     }
 }
 
-function setupEventListeners() {
-    const consultaTipo = document.getElementById("consultaTipo");
-    if (consultaTipo) {
-        consultaTipo.addEventListener("change", (e) => {
-            const selected = e.target.options[e.target.selectedIndex];
-            const costoInput = document.getElementById("costoConsulta");
-            if (costoInput) {
-                costoInput.value = selected.getAttribute("data-costo") || "0";
+async function handleLogout() {
+    try {
+        if (unsubscribeInventario) unsubscribeInventario();
+        await signOut(auth);
+    } catch (err) {
+        console.error("Error al cerrar sesión:", err);
+    }
+}
+
+async function cargarRolUsuario(uid) {
+    try {
+        const userDocRef = doc(db, "usuarios", uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            currentRole = userDoc.data().rol;
+        } else {
+            console.error("No se encontró documento de usuario para el UID:", uid);
+            currentRole = "invitado";
+        }
+    } catch (err) {
+        console.error("Error al obtener rol:", err);
+        currentRole = "invitado";
+    }
+}
+
+function mostrarPantallaLogin() {
+    const loginScreen = document.getElementById("login-screen");
+    const appScreen = document.getElementById("app-screen");
+    if (loginScreen) loginScreen.style.display = "flex";
+    if (appScreen) appScreen.style.display = "none";
+}
+
+function configurarInterfaz() {
+    const loginScreen = document.getElementById("login-screen");
+    const appScreen = document.getElementById("app-screen");
+    if (loginScreen) loginScreen.style.display = "none";
+    if (appScreen) appScreen.style.display = "block";
+
+    const userEmailSpan = document.getElementById("user-email");
+    const userRoleSpan = document.getElementById("user-role");
+    if (userEmailSpan) userEmailSpan.innerText = currentUser.email;
+    if (userRoleSpan) userRoleSpan.innerText = currentRole;
+
+    const tabs = document.querySelectorAll(".tab-btn");
+    tabs.forEach(tab => {
+        const rolesPermitidos = tab.getAttribute("data-roles");
+        if (rolesPermitidos) {
+            const listaRoles = rolesPermitidos.split(",");
+            if (listaRoles.includes(currentRole) || currentRole === "admin") {
+                tab.style.display = "inline-block";
+            } else {
+                tab.style.display = "none";
             }
-        });
-    }
-
-    document.getElementById("formConsulta")?.addEventListener("submit", guardarConsulta);
-    document.getElementById("btnAgregarMed")?.addEventListener("click", agregarMedicamentoACaja);
-    document.getElementById("btnProcessPayment")?.addEventListener("click", procesarCobroFirestore);
-    document.getElementById("formInventario")?.addEventListener("submit", guardarInventarioFirestore);
-    document.getElementById("btnGenerarReporteContable")?.addEventListener("click", generarReporteContableTurno);
-    document.getElementById("btnGenerarReporteInegi")?.addEventListener("click", generarReporteInegiPDF);
-    document.getElementById("btnPrintTicketNow")?.addEventListener("click", () => window.print());
-}
-
-async function guardarConsulta(e) {
-    e.preventDefault();
-    const folio = "FOL-" + Math.floor(1000 + Math.random() * 9000);
-    
-    const consultaData = {
-        folio: folio,
-        paciente: document.getElementById("pacienteNombre").value,
-        servicio: document.getElementById("consultaTipo").value,
-        medico: document.getElementById("medicoSelect").value,
-        consultorio: document.getElementById("consultorio").value,
-        costo: parseFloat(document.getElementById("costoConsulta").value) || 0,
-        estado: "PENDIENTE",
-        fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString()
-    };
-
-    try {
-        await addDoc(consultasRef, consultaData);
-
-        const lblFolio = document.getElementById("lblFolio");
-        const lblPaciente = document.getElementById("lblPaciente");
-        const lblMedico = document.getElementById("lblMedico");
-        const lblConsultorio = document.getElementById("lblConsultorio");
-        const lblServicio = document.getElementById("lblServicio");
-        const lblTotal = document.getElementById("lblTotal");
-
-        if (lblFolio) lblFolio.innerText = folio;
-        if (lblPaciente) lblPaciente.innerText = consultaData.paciente;
-        if (lblMedico) lblMedico.innerText = consultaData.medico;
-        if (lblConsultorio) lblConsultorio.innerText = consultaData.consultorio;
-        if (lblServicio) lblServicio.innerText = consultaData.servicio;
-        if (lblTotal) lblTotal.innerText = `$${consultaData.costo.toFixed(2)}`;
-
-        const tckPlaceholder = document.getElementById("ticketPlaceholder");
-        const tckGenerated = document.getElementById("ticketGenerated");
-        if (tckPlaceholder) tckPlaceholder.style.display = "none";
-        if (tckGenerated) tckGenerated.style.display = "block";
-
-        alert(`Orden enviada a Caja. Folio: ${folio}`);
-        document.getElementById("formConsulta").reset();
-    } catch (err) {
-        console.error("Error al registrar consulta:", err);
-        alert("Error al registrar consulta.");
-    }
-}
-
-async function guardarInventarioFirestore(e) {
-    e.preventDefault();
-
-    const caducidadValor = document.getElementById("invCaducidad").value;
-    const fechaCaducidad = new Date(caducidadValor + "T00:00:00");
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    if (fechaCaducidad < hoy) {
-        alert("Error: No se pueden registrar o actualizar medicamentos caducados (fecha anterior al día de hoy).");
-        return;
-    }
-
-    const codigo = document.getElementById("invCodigo").value.trim();
-    const itemData = {
-        codigo: codigo,
-        nombre: document.getElementById("invNombre").value.trim(),
-        categoria: document.getElementById("invCat").value.trim(),
-        ubicacion: document.getElementById("invUbicacion").value.trim(),
-        precio: parseFloat(document.getElementById("invPrecio").value) || 0,
-        stock: parseInt(document.getElementById("invStock").value) || 0,
-        minStock: parseInt(document.getElementById("invMinStock").value) || 0,
-        caducidad: caducidadValor
-    };
-
-    try {
-        const itemDocRef = doc(db, "inventario", codigo);
-        await setDoc(itemDocRef, itemData, { merge: true });
-        alert("Insumo registrado/actualizado correctamente.");
-        document.getElementById("formInventario").reset();
-    } catch (err) {
-        console.error("Error al guardar inventario:", err);
-        alert("Error al guardar en el inventario.");
-    }
-}
-
-window.cargarOrdenACaja = function(docId, servicio, paciente, costo) {
-    const existe = cajaActualItems.some(i => i.firestoreId === docId);
-    if (existe) return alert("Esta consulta ya está en la caja.");
-
-    cajaActualItems.push({
-        desc: `${servicio} - ${paciente}`,
-        cant: 1,
-        precio: costo,
-        subtotal: costo,
-        firestoreId: docId,
-        tipo: "CONSULTA"
+        }
     });
-    renderTablaCaja();
-};
 
-function agregarMedicamentoACaja() {
-    const select = document.getElementById("selectMedPrescription");
-    if (!select || !select.value) return alert("Selecciona un medicamento del inventario.");
-
-    const selectedOption = select.options[select.selectedIndex];
-    const inputCant = document.getElementById("cantMedPrescription");
-    const cantidadDeseada = inputCant ? parseInt(inputCant.value) || 1 : 1;
-
-    if (cantidadDeseada <= 0) return alert("Ingresa una cantidad válida mayor a 0.");
-
-    const id = select.value;
-    const nombre = selectedOption.getAttribute("data-nombre");
-    const precio = parseFloat(selectedOption.getAttribute("data-precio")) || 0;
-    const stockActual = parseInt(selectedOption.getAttribute("data-stock")) || 0;
-
-    const itemExistente = cajaActualItems.find(i => i.id === id && i.tipo === "MEDICAMENTO");
-    const cantidadEnCarrito = itemExistente ? itemExistente.cant : 0;
-    const cantidadTotalSolicitada = cantidadEnCarrito + cantidadDeseada;
-
-    if (cantidadTotalSolicitada > stockActual) {
-        return alert(`Stock insuficiente. Stock disponible: ${stockActual} (Ya tienes ${cantidadEnCarrito} en la caja).`);
-    }
-
-    if (itemExistente) {
-        itemExistente.cant += cantidadDeseada;
-        itemExistente.subtotal = itemExistente.cant * precio;
+    if (currentRole === "secretaria") {
+        switchTab("pacientes");
+    } else if (currentRole === "farmacia") {
+        switchTab("inventario");
     } else {
-        cajaActualItems.push({
-            id: id,
-            desc: nombre,
-            cant: cantidadDeseada,
-            precio: precio,
-            subtotal: cantidadDeseada * precio,
-            tipo: "MEDICAMENTO"
-        });
+        switchTab("pacientes");
     }
 
-    select.value = "";
-    if (inputCant) inputCant.value = 1;
-
-    renderTablaCaja();
+    escucharColecciones();
 }
 
-function renderTablaCaja() {
-    const tbody = document.getElementById("cajaItems");
-    if (!tbody) return;
+function switchTab(moduleName) {
+    const tabs = document.querySelectorAll(".tab-btn");
+    const modules = document.querySelectorAll(".module");
 
-    tbody.innerHTML = "";
-    let total = 0;
-
-    if (cajaActualItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No hay ítems cargados en la caja</td></tr>`;
-        const totalElem = document.getElementById("cajaTotal");
-        if (totalElem) totalElem.innerText = "$0.00";
-        return;
-    }
-
-    cajaActualItems.forEach(item => {
-        total += item.subtotal;
-        tbody.innerHTML += `
-            <tr>
-                <td>${item.desc}</td>
-                <td>${item.cant}</td>
-                <td>$${item.precio.toFixed(2)}</td>
-                <td>$${item.subtotal.toFixed(2)}</td>
-            </tr>
-        `;
+    tabs.forEach(tab => {
+        if (tab.getAttribute("data-module") === moduleName) {
+            tab.classList.add("active");
+        } else {
+            tab.classList.remove("active");
+        }
     });
 
-    const totalElem = document.getElementById("cajaTotal");
-    if (totalElem) totalElem.innerText = `$${total.toFixed(2)}`;
+    modules.forEach(mod => {
+        if (mod.id === `module-${moduleName}`) {
+            mod.classList.add("active");
+        } else {
+            mod.classList.remove("active");
+        }
+    });
 }
 
-async function procesarCobroFirestore() {
-    if (cajaActualItems.length === 0) return alert("No hay ítems en la caja.");
+function escucharColecciones() {
+    cargasEnTiempoReal();
+}
 
-    const inputCliente = document.getElementById("cajaNombreCliente")?.value.trim() || "";
-    const clienteNombre = inputCliente !== "" ? inputCliente : "Público General";
+function cargasEnTiempoReal() {
+    const qPacientes = query(collection(db, "pacientes"), orderBy("fechaRegistro", "desc"));
+    onSnapshot(qPacientes, (snapshot) => {
+        const pacientes = [];
+        snapshot.forEach(doc => pacientes.push({ id: doc.id, ...doc.data() }));
+        renderizarPacientes(pacientes);
+        actualizarSelectsPacientes(pacientes);
+    });
 
-    const total = cajaActualItems.reduce((acc, i) => acc + i.subtotal, 0);
-    const metodoPago = document.getElementById("cajaMetodoPago")?.value || "EFECTIVO";
-    const ticketId = "TCK-" + Math.floor(10000 + Math.random() * 90000);
-    const fechaHora = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+    const qCitas = query(collection(db, "citas"), orderBy("fechaHora", "asc"));
+    onSnapshot(qCitas, (snapshot) => {
+        const citas = [];
+        snapshot.forEach(doc => citas.push({ id: doc.id, ...doc.data() }));
+        renderizarCitas(citas);
+    });
+
+    const qInventario = query(collection(db, "inventario"), orderBy("nombre", "asc"));
+    if (unsubscribeInventario) unsubscribeInventario();
+    unsubscribeInventario = onSnapshot(qInventario, (snapshot) => {
+        const items = [];
+        snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+        renderizarInventario(items);
+        actualizarSelectsMedicamentos(items);
+    });
+
+    const qCobros = query(collection(db, "cobros"), orderBy("fecha", "desc"));
+    onSnapshot(qCobros, (snapshot) => {
+        const cobros = [];
+        snapshot.forEach(doc => cobros.push({ id: doc.id, ...doc.data() }));
+        renderizarCobros(cobros);
+    });
+}
+
+async function handleGuardarPaciente(e) {
+    e.preventDefault();
+    const nombre = document.getElementById("paciente-nombre").value.trim();
+    const telefono = document.getElementById("paciente-telefono").value.trim();
+    const email = document.getElementById("paciente-email").value.trim();
+
+    if (!nombre) return;
 
     try {
-        await addDoc(ventasRef, {
-            ticketId: ticketId,
-            cliente: clienteNombre,
-            items: cajaActualItems,
-            total: total,
-            metodoPago: metodoPago,
-            fecha: fechaHora
+        await addDoc(collection(db, "pacientes"), {
+            nombre,
+            telefono,
+            email,
+            fechaRegistro: serverTimestamp()
         });
-
-        for (let item of cajaActualItems) {
-            if (item.tipo === "CONSULTA" && item.firestoreId) {
-                await updateDoc(doc(db, "consultas", item.firestoreId), { estado: "PAGADO" });
-            } else if (item.tipo === "MEDICAMENTO" && item.id) {
-                const medRef = doc(db, "inventario", item.id);
-                const medSnap = await getDoc(medRef);
-                if (medSnap.exists()) {
-                    const nuevoStock = Math.max(0, medSnap.data().stock - item.cant);
-                    await updateDoc(medRef, { stock: nuevoStock });
-                }
-            }
-        }
-
-        const tckId = document.getElementById("tckId");
-        const tckCliente = document.getElementById("tckCliente");
-        const tckFecha = document.getElementById("tckFecha");
-        const tckPago = document.getElementById("tckPago");
-        const tckTotal = document.getElementById("tckTotal");
-
-        if (tckId) tckId.innerText = ticketId;
-        if (tckCliente) tckCliente.innerText = clienteNombre;
-        if (tckFecha) tckFecha.innerText = fechaHora;
-        if (tckPago) tckPago.innerText = metodoPago;
-        if (tckTotal) tckTotal.innerText = total.toFixed(2);
-
-        const detalleDiv = document.getElementById("tckDetalleItems");
-        if (detalleDiv) {
-            detalleDiv.innerHTML = "";
-            cajaActualItems.forEach(i => {
-                detalleDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin:2px 0;"><span>${i.cant}x ${i.desc}</span><span>$${i.subtotal.toFixed(2)}</span></div>`;
-            });
-        }
-
-        const tckImprimirArea = document.getElementById("ticketClienteImprimir");
-        if (tckImprimirArea) tckImprimirArea.style.display = "block";
-
-        cajaActualItems = [];
-        renderTablaCaja();
+        e.target.reset();
     } catch (err) {
-        console.error("Error al procesar cobro:", err);
-        alert("Error al procesar el cobro.");
+        console.error("Error al guardar paciente:", err);
     }
 }
 
-async function generarReporteContableTurno() {
-    alert("Generando reporte contable...");
-}
+function renderizarPacientes(pacientes) {
+    const tbody = document.getElementById("tabla-pacientes-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
 
-function generarReporteInegiPDF() {
-    alert("Generando boleta INEGI...");
-    window.print();
-}
+    pacientes.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${p.nombre || ""}</td>
+            <td>${p.telefono || "-"}</td>
+            <td>${p.email || "-"}</td>
+            <td>
+                <button class="btn btn-danger btn-sm btn-eliminar-paciente" data-id="${p.id}">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 
-function initRealtimeData() {
-    onSnapshot(consultasRef, (snapshot) => {
-        const tablaConsultas = document.getElementById("tablaConsultasPendientes");
-        if (tablaConsultas) tablaConsultas.innerHTML = "";
-
-        snapshot.forEach((docSnap) => {
-            const c = docSnap.data();
-            const docId = docSnap.id;
-
-            if (tablaConsultas && c.estado === 'PENDIENTE') {
-                tablaConsultas.innerHTML += `
-                    <tr>
-                        <td>${c.folio || "N/A"}</td>
-                        <td>${c.paciente}</td>
-                        <td>${c.servicio}</td>
-                        <td>$${parseFloat(c.costo || 0).toFixed(2)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-success" onclick="cargarOrdenACaja('${docId}', '${c.servicio}', '${c.paciente}', ${c.costo})">Cobrar</button>
-                        </td>
-                    </tr>
-                `;
+    tbody.querySelectorAll(".btn-eliminar-paciente").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = e.target.getAttribute("data-id");
+            if (confirm("¿Desea eliminar este paciente?")) {
+                deleteDoc(doc(db, "pacientes", id));
             }
         });
+    });
+}
 
-        if (tablaConsultas && tablaConsultas.innerHTML === "") {
-            tablaConsultas.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No hay consultas pendientes de pago</td></tr>`;
+function actualizarSelectsPacientes(pacientes) {
+    const selectCita = document.getElementById("cita-paciente-select");
+    const selectCobro = document.getElementById("cobro-paciente-select");
+
+    const opciones = pacientes.map(p => `<option value="${p.id}">${p.nombre}</option>`).join("");
+    const defaultOpt = `<option value="">Seleccione un paciente...</option>`;
+
+    if (selectCita) selectCita.innerHTML = defaultOpt + opciones;
+    if (selectCobro) selectCobro.innerHTML = defaultOpt + opciones;
+}
+
+async function handleGuardarCita(e) {
+    e.preventDefault();
+    const pacienteId = document.getElementById("cita-paciente-select").value;
+    const fechaHora = document.getElementById("cita-fechahora").value;
+    const motivo = document.getElementById("cita-motivo").value.trim();
+
+    const select = document.getElementById("cita-paciente-select");
+    const pacienteNombre = select.options[select.selectedIndex]?.text || "";
+
+    if (!pacienteId || !fechaHora) return;
+
+    try {
+        await addDoc(collection(db, "citas"), {
+            pacienteId,
+            pacienteNombre,
+            fechaHora,
+            motivo,
+            estado: "Pendiente",
+            fechaCreacion: serverTimestamp()
+        });
+        e.target.reset();
+    } catch (err) {
+        console.error("Error al agendar cita:", err);
+    }
+}
+
+function renderizarCitas(citas) {
+    const tbody = document.getElementById("tabla-citas-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    citas.forEach(c => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${c.pacienteNombre || ""}</td>
+            <td>${c.fechaHora ? new Date(c.fechaHora).toLocaleString() : ""}</td>
+            <td>${c.motivo || "-"}</td>
+            <td><span class="badge">${c.estado || "Pendiente"}</span></td>
+            <td>
+                <button class="btn btn-danger btn-sm btn-eliminar-cita" data-id="${c.id}">Cancelar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".btn-eliminar-cita").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = e.target.getAttribute("data-id");
+            if (confirm("¿Desea cancelar esta cita?")) {
+                deleteDoc(doc(db, "citas", id));
+            }
+        });
+    });
+}
+
+async function handleGuardarMedicamento(e) {
+    e.preventDefault();
+    const nombre = document.getElementById("med-nombre").value.trim();
+    const stock = parseInt(document.getElementById("med-stock").value) || 0;
+    const precio = parseFloat(document.getElementById("med-precio").value) || 0;
+    const caducidad = document.getElementById("med-caducidad").value;
+
+    if (!nombre) return;
+
+    try {
+        await addDoc(collection(db, "inventario"), {
+            nombre,
+            stock,
+            precio,
+            caducidad,
+            fechaRegistro: serverTimestamp()
+        });
+        e.target.reset();
+    } catch (err) {
+        console.error("Error al guardar medicamento:", err);
+    }
+}
+
+function renderizarInventario(items) {
+    const tbody = document.getElementById("tabla-inventario-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const hoy = new Date();
+    const limite30Dias = new Date();
+    limite30Dias.setDate(hoy.getDate() + 30);
+
+    items.forEach(item => {
+        const fechaCad = item.caducidad ? new Date(item.caducidad) : null;
+        const stockBajo = item.stock <= 5;
+        const proximoCaducar = fechaCad && fechaCad <= limite30Dias;
+
+        const tr = document.createElement("tr");
+        if (stockBajo || proximoCaducar) {
+            tr.classList.add("row-alert");
         }
+
+        tr.innerHTML = `
+            <td>${item.nombre || ""}</td>
+            <td>${item.stock} ${stockBajo ? '<span style="color:red; font-weight:bold;">(!Bajo)</span>' : ''}</td>
+            <td>$${item.precio ? item.precio.toFixed(2) : "0.00"}</td>
+            <td>${item.caducidad || "-"} ${proximoCaducar ? '<span style="color:red; font-weight:bold;">(!Próximo)</span>' : ''}</td>
+            <td>
+                <button class="btn btn-danger btn-sm btn-eliminar-med" data-id="${item.id}">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
 
-    onSnapshot(inventarioRef, (snapshot) => {
-        const tablaInv = document.getElementById("tablaInventarioBody");
-        const selectMed = document.getElementById("selectMedPrescription");
-
-        if (tablaInv) tablaInv.innerHTML = "";
-        if (selectMed) selectMed.innerHTML = '<option value="">-- Seleccionar producto --</option>';
-
-        snapshot.forEach((docSnap) => {
-            const item = docSnap.data();
-            const id = docSnap.id;
-            const bajoStock = item.stock <= item.minStock;
-
-            if (tablaInv) {
-                tablaInv.innerHTML += `
-                    <tr class="${bajoStock ? 'row-alert' : ''}">
-                        <td>${item.codigo}</td>
-                        <td>${item.nombre}</td>
-                        <td>${item.categoria}</td>
-                        <td>${item.ubicacion}</td>
-                        <td>$${parseFloat(item.precio || 0).toFixed(2)}</td>
-                        <td>${item.stock}</td>
-                        <td>${item.minStock}</td>
-                        <td>${item.caducidad || 'N/A'}</td>
-                    </tr>
-                `;
-            }
-
-            if (selectMed) {
-                selectMed.innerHTML += `
-                    <option value="${id}" data-nombre="${item.nombre}" data-precio="${item.precio}" data-stock="${item.stock}">
-                        ${item.nombre} - $${item.precio} (Stock: ${item.stock})
-                    </option>
-                `;
+    tbody.querySelectorAll(".btn-eliminar-med").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = e.target.getAttribute("data-id");
+            if (confirm("¿Desea eliminar este medicamento?")) {
+                deleteDoc(doc(db, "inventario", id));
             }
         });
     });
+}
+
+function actualizarSelectsMedicamentos(items) {
+    const selectCobroMed = document.getElementById("cobro-medicamento-select");
+    if (!selectCobroMed) return;
+
+    const opciones = items
+        .filter(i => i.stock > 0)
+        .map(i => `<option value="${i.id}" data-precio="${i.precio}" data-stock="${i.stock}">${i.nombre} - $${i.precio.toFixed(2)} (Stock: ${i.stock})</option>`)
+        .join("");
+
+    selectCobroMed.innerHTML = `<option value="">Seleccione medicamento (opcional)...</option>` + opciones;
+}
+
+async function handleGuardarCobro(e) {
+    e.preventDefault();
+    const pacienteSelect = document.getElementById("cobro-paciente-select");
+    const pacienteId = pacienteSelect.value;
+    const pacienteNombre = pacienteSelect.options[pacienteSelect.selectedIndex]?.text || "";
+
+    const concepto = document.getElementById("cobro-concepto").value.trim();
+    const montoConsulta = parseFloat(document.getElementById("cobro-monto-consulta").value) || 0;
+
+    const medSelect = document.getElementById("cobro-medicamento-select");
+    const medId = medSelect ? medSelect.value : "";
+    let medNombre = "";
+    let medPrecio = 0;
+
+    if (medId) {
+        const optSelected = medSelect.options[medSelect.selectedIndex];
+        medPrecio = parseFloat(optSelected.getAttribute("data-precio")) || 0;
+        const currentStock = parseInt(optSelected.getAttribute("data-stock")) || 0;
+        medNombre = optSelected.text.split(" - ")[0];
+
+        if (currentStock > 0) {
+            const medRef = doc(db, "inventario", medId);
+            await updateDoc(medRef, { stock: currentStock - 1 });
+        }
+    }
+
+    const total = montoConsulta + medPrecio;
+
+    try {
+        const docRef = await addDoc(collection(db, "cobros"), {
+            pacienteId,
+            pacienteNombre,
+            concepto,
+            montoConsulta,
+            medicamentoId: medId,
+            medicamentoNombre: medNombre,
+            medicamentoPrecio: medPrecio,
+            total,
+            fecha: serverTimestamp()
+        });
+
+        e.target.reset();
+        generarTicket({
+            id: docRef.id,
+            pacienteNombre,
+            concepto,
+            montoConsulta,
+            medicamentoNombre: medNombre,
+            medicamentoPrecio: medPrecio,
+            total,
+            fecha: new Date().toLocaleString()
+        });
+
+    } catch (err) {
+        console.error("Error al registrar cobro:", err);
+    }
+}
+
+function renderizarCobros(cobros) {
+    const tbody = document.getElementById("tabla-cobros-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    cobros.forEach(c => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${c.pacienteNombre || ""}</td>
+            <td>${c.concepto || "Consulta"}</td>
+            <td>$${c.total ? c.total.toFixed(2) : "0.00"}</td>
+            <td>${c.fecha ? new Date(c.fecha.seconds * 1000).toLocaleString() : ""}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function generarTicket(datos) {
+    const ticketBox = document.getElementById("ticket-cliente-container");
+    if (!ticketBox) return;
+
+    ticketBox.innerHTML = `
+        <div id="ticketClienteImprimir" class="ticket-box">
+            <div class="ticket-header">
+                <h3>Comprobante de Pago</h3>
+                <p>Clínica Médica</p>
+                <small>Fecha: ${datos.fecha}</small>
+            </div>
+            <div class="ticket-row">
+                <span><strong>Paciente:</strong></span>
+                <span>${datos.pacienteNombre}</span>
+            </div>
+            <div class="ticket-row">
+                <span><strong>Concepto:</strong></span>
+                <span>${datos.concepto}</span>
+            </div>
+            <div class="ticket-row">
+                <span>Consulta / Serv:</span>
+                <span>$${datos.montoConsulta.toFixed(2)}</span>
+            </div>
+            ${datos.medicamentoNombre ? `
+            <div class="ticket-row">
+                <span>Med: ${datos.medicamentoNombre}</span>
+                <span>$${datos.medicamentoPrecio.toFixed(2)}</span>
+            </div>
+            ` : ""}
+            <div class="ticket-row ticket-total">
+                <span>TOTAL:</span>
+                <span>$${datos.total.toFixed(2)}</span>
+            </div>
+        </div>
+    `;
+
+    const areaImpresion = document.getElementById("area-impresion");
+    if (areaImpresion) {
+        areaImpresion.style.display = "block";
+    }
 }
