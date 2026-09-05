@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupEventListeners();
     
     const inputFecha = document.getElementById("reporteFecha");
-    if(inputFecha) {
+    if (inputFecha) {
         inputFecha.value = new Date().toISOString().split('T')[0];
     }
 
@@ -39,60 +39,80 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function setupAuthListeners() {
-    document.getElementById("formLogin").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("loginEmail").value;
-        const pass = document.getElementById("loginPassword").value;
-        const errDiv = document.getElementById("loginError");
+    const formLogin = document.getElementById("formLogin");
+    if (formLogin) {
+        formLogin.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("loginEmail").value;
+            const pass = document.getElementById("loginPassword").value;
+            const errDiv = document.getElementById("loginError");
 
-        try {
-            errDiv.style.display = "none";
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (err) {
-            errDiv.innerText = "Error: Credenciales inválidas.";
-            errDiv.style.display = "block";
-        }
-    });
+            try {
+                if (errDiv) errDiv.style.display = "none";
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                if (errDiv) {
+                    errDiv.innerText = "Error: Credenciales inválidas.";
+                    errDiv.style.display = "block";
+                }
+            }
+        });
+    }
 
-    document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
+    const btnLogout = document.getElementById("btnLogout");
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => signOut(auth));
+    }
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            const userDoc = await getDoc(doc(db, "usuarios", user.uid));
-            
-            if (userDoc.exists()) {
-                currentUserRole = userDoc.data().rol;
-            } else {
-                currentUserRole = "secretaria"; 
+            try {
+                const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+                if (userDoc.exists()) {
+                    currentUserRole = userDoc.data().rol;
+                } else {
+                    currentUserRole = "secretaria"; 
+                }
+            } catch (error) {
+                console.error("Error al obtener el rol del usuario:", error);
+                currentUserRole = "secretaria";
             }
 
-            document.getElementById("userDisplayEmail").innerText = user.email;
-            document.getElementById("userDisplayRole").innerText = currentUserRole;
-            document.getElementById("login-screen").style.display = "none";
-            document.getElementById("app-screen").style.display = "block";
+            const displayEmail = document.getElementById("userDisplayEmail");
+            const displayRole = document.getElementById("userDisplayRole");
+            const loginScreen = document.getElementById("login-screen");
+            const appScreen = document.getElementById("app-screen");
+
+            if (displayEmail) displayEmail.innerText = user.email;
+            if (displayRole) displayRole.innerText = currentUserRole;
+            if (loginScreen) loginScreen.style.display = "none";
+            if (appScreen) appScreen.style.display = "block";
 
             configureUIByRole(currentUserRole);
             initRealtimeData();
         } else {
-            document.getElementById("login-screen").style.display = "flex";
-            document.getElementById("app-screen").style.display = "none";
+            const loginScreen = document.getElementById("login-screen");
+            const appScreen = document.getElementById("app-screen");
+            if (loginScreen) loginScreen.style.display = "flex";
+            if (appScreen) appScreen.style.display = "none";
         }
     });
 }
 
 function configureUIByRole(role) {
     const nav = document.getElementById("mainNav");
-    nav.innerHTML = "";
+    if (!nav) return;
 
+    nav.innerHTML = "";
     document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
 
     if (role === "secretaria") {
         nav.innerHTML = '<button class="tab-btn active" data-mod="sec-mod">Recepción (Secretaría)</button>';
-        document.getElementById("sec-mod").classList.add("active");
+        document.getElementById("sec-mod")?.classList.add("active");
     } 
     else if (role === "farmacia") {
         nav.innerHTML = '<button class="tab-btn active" data-mod="farm-mod">Farmacia, Caja e Inventario</button>';
-        document.getElementById("farm-mod").classList.add("active");
+        document.getElementById("farm-mod")?.classList.add("active");
     } 
     else if (role === "admin") {
         nav.innerHTML = `
@@ -100,34 +120,38 @@ function configureUIByRole(role) {
             <button class="tab-btn" data-mod="sec-mod">Recepción</button>
             <button class="tab-btn" data-mod="farm-mod">Farmacia / Inventario</button>
         `;
-        document.getElementById("adm-mod").classList.add("active");
+        document.getElementById("adm-mod")?.classList.add("active");
 
         nav.querySelectorAll(".tab-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 nav.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
                 document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
                 btn.classList.add("active");
-                document.getElementById(btn.getAttribute("data-mod")).classList.add("active");
+                const targetMod = btn.getAttribute("data-mod");
+                if (targetMod) {
+                    document.getElementById(targetMod)?.classList.add("active");
+                }
             });
         });
     }
 }
 
 function setupEventListeners() {
-    document.getElementById("consultaTipo").addEventListener("change", (e) => {
-        const selected = e.target.options[e.target.selectedIndex];
-        document.getElementById("costoConsulta").value = selected.getAttribute("data-costo");
-    });
-
-    document.getElementById("formConsulta").addEventListener("submit", guardarConsulta);
-    
-    const btnAgregarMed = document.getElementById("btnAgregarMed");
-    if (btnAgregarMed) {
-        btnAgregarMed.addEventListener("click", agregarMedicamentoACaja);
+    const consultaTipo = document.getElementById("consultaTipo");
+    if (consultaTipo) {
+        consultaTipo.addEventListener("change", (e) => {
+            const selected = e.target.options[e.target.selectedIndex];
+            const costoInput = document.getElementById("costoConsulta");
+            if (costoInput) {
+                costoInput.value = selected.getAttribute("data-costo") || "0";
+            }
+        });
     }
 
-    document.getElementById("btnProcessPayment").addEventListener("click", procesarCobroFirestore);
-    document.getElementById("formInventario").addEventListener("submit", guardarInventarioFirestore);
+    document.getElementById("formConsulta")?.addEventListener("submit", guardarConsulta);
+    document.getElementById("btnAgregarMed")?.addEventListener("click", agregarMedicamentoACaja);
+    document.getElementById("btnProcessPayment")?.addEventListener("click", procesarCobroFirestore);
+    document.getElementById("formInventario")?.addEventListener("submit", guardarInventarioFirestore);
     document.getElementById("btnGenerarReporteContable")?.addEventListener("click", generarReporteContableTurno);
     document.getElementById("btnGenerarReporteInegi")?.addEventListener("click", generarReporteInegiPDF);
     document.getElementById("btnPrintTicketNow")?.addEventListener("click", () => window.print());
@@ -143,7 +167,7 @@ async function guardarConsulta(e) {
         servicio: document.getElementById("consultaTipo").value,
         medico: document.getElementById("medicoSelect").value,
         consultorio: document.getElementById("consultorio").value,
-        costo: parseFloat(document.getElementById("costoConsulta").value),
+        costo: parseFloat(document.getElementById("costoConsulta").value) || 0,
         estado: "PENDIENTE",
         fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString()
     };
@@ -151,19 +175,29 @@ async function guardarConsulta(e) {
     try {
         await addDoc(consultasRef, consultaData);
 
-        document.getElementById("lblFolio").innerText = folio;
-        document.getElementById("lblPaciente").innerText = consultaData.paciente;
-        document.getElementById("lblMedico").innerText = consultaData.medico;
-        document.getElementById("lblConsultorio").innerText = consultaData.consultorio;
-        document.getElementById("lblServicio").innerText = consultaData.servicio;
-        document.getElementById("lblTotal").innerText = `$${consultaData.costo.toFixed(2)}`;
+        const lblFolio = document.getElementById("lblFolio");
+        const lblPaciente = document.getElementById("lblPaciente");
+        const lblMedico = document.getElementById("lblMedico");
+        const lblConsultorio = document.getElementById("lblConsultorio");
+        const lblServicio = document.getElementById("lblServicio");
+        const lblTotal = document.getElementById("lblTotal");
 
-        document.getElementById("ticketPlaceholder").style.display = "none";
-        document.getElementById("ticketGenerated").style.display = "block";
+        if (lblFolio) lblFolio.innerText = folio;
+        if (lblPaciente) lblPaciente.innerText = consultaData.paciente;
+        if (lblMedico) lblMedico.innerText = consultaData.medico;
+        if (lblConsultorio) lblConsultorio.innerText = consultaData.consultorio;
+        if (lblServicio) lblServicio.innerText = consultaData.servicio;
+        if (lblTotal) lblTotal.innerText = `$${consultaData.costo.toFixed(2)}`;
+
+        const tckPlaceholder = document.getElementById("ticketPlaceholder");
+        const tckGenerated = document.getElementById("ticketGenerated");
+        if (tckPlaceholder) tckPlaceholder.style.display = "none";
+        if (tckGenerated) tckGenerated.style.display = "block";
 
         alert(`Orden enviada a Caja. Folio: ${folio}`);
         document.getElementById("formConsulta").reset();
     } catch (err) {
+        console.error("Error al registrar consulta:", err);
         alert("Error al registrar consulta.");
     }
 }
@@ -172,7 +206,6 @@ async function guardarInventarioFirestore(e) {
     e.preventDefault();
 
     const caducidadValor = document.getElementById("invCaducidad").value;
-    
     const fechaCaducidad = new Date(caducidadValor + "T00:00:00");
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -188,9 +221,9 @@ async function guardarInventarioFirestore(e) {
         nombre: document.getElementById("invNombre").value.trim(),
         categoria: document.getElementById("invCat").value.trim(),
         ubicacion: document.getElementById("invUbicacion").value.trim(),
-        precio: parseFloat(document.getElementById("invPrecio").value),
-        stock: parseInt(document.getElementById("invStock").value),
-        minStock: parseInt(document.getElementById("invMinStock").value),
+        precio: parseFloat(document.getElementById("invPrecio").value) || 0,
+        stock: parseInt(document.getElementById("invStock").value) || 0,
+        minStock: parseInt(document.getElementById("invMinStock").value) || 0,
         caducidad: caducidadValor
     };
 
@@ -200,13 +233,14 @@ async function guardarInventarioFirestore(e) {
         alert("Insumo registrado/actualizado correctamente.");
         document.getElementById("formInventario").reset();
     } catch (err) {
+        console.error("Error al guardar inventario:", err);
         alert("Error al guardar en el inventario.");
     }
 }
 
 window.cargarOrdenACaja = function(docId, servicio, paciente, costo) {
     const existe = cajaActualItems.some(i => i.firestoreId === docId);
-    if(existe) return alert("Esta consulta ya está en la caja.");
+    if (existe) return alert("Esta consulta ya está en la caja.");
 
     cajaActualItems.push({
         desc: `${servicio} - ${paciente}`,
@@ -221,9 +255,9 @@ window.cargarOrdenACaja = function(docId, servicio, paciente, costo) {
 
 function agregarMedicamentoACaja() {
     const select = document.getElementById("selectMedPrescription");
-    const selectedOption = select.options[select.selectedIndex];
-    if (!select.value) return alert("Selecciona un medicamento del inventario.");
+    if (!select || !select.value) return alert("Selecciona un medicamento del inventario.");
 
+    const selectedOption = select.options[select.selectedIndex];
     const inputCant = document.getElementById("cantMedPrescription");
     const cantidadDeseada = inputCant ? parseInt(inputCant.value) || 1 : 1;
 
@@ -231,8 +265,8 @@ function agregarMedicamentoACaja() {
 
     const id = select.value;
     const nombre = selectedOption.getAttribute("data-nombre");
-    const precio = parseFloat(selectedOption.getAttribute("data-precio"));
-    const stockActual = parseInt(selectedOption.getAttribute("data-stock"));
+    const precio = parseFloat(selectedOption.getAttribute("data-precio")) || 0;
+    const stockActual = parseInt(selectedOption.getAttribute("data-stock")) || 0;
 
     const itemExistente = cajaActualItems.find(i => i.id === id && i.tipo === "MEDICAMENTO");
     const cantidadEnCarrito = itemExistente ? itemExistente.cant : 0;
@@ -264,12 +298,15 @@ function agregarMedicamentoACaja() {
 
 function renderTablaCaja() {
     const tbody = document.getElementById("cajaItems");
+    if (!tbody) return;
+
     tbody.innerHTML = "";
     let total = 0;
 
     if (cajaActualItems.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No hay ítems cargados en la caja</td></tr>`;
-        document.getElementById("cajaTotal").innerText = "$0.00";
+        const totalElem = document.getElementById("cajaTotal");
+        if (totalElem) totalElem.innerText = "$0.00";
         return;
     }
 
@@ -285,17 +322,18 @@ function renderTablaCaja() {
         `;
     });
 
-    document.getElementById("cajaTotal").innerText = `$${total.toFixed(2)}`;
+    const totalElem = document.getElementById("cajaTotal");
+    if (totalElem) totalElem.innerText = `$${total.toFixed(2)}`;
 }
 
 async function procesarCobroFirestore() {
     if (cajaActualItems.length === 0) return alert("No hay ítems en la caja.");
 
-    const inputCliente = document.getElementById("cajaNombreCliente").value.trim();
+    const inputCliente = document.getElementById("cajaNombreCliente")?.value.trim() || "";
     const clienteNombre = inputCliente !== "" ? inputCliente : "Público General";
 
     const total = cajaActualItems.reduce((acc, i) => acc + i.subtotal, 0);
-    const metodoPago = document.getElementById("cajaMetodoPago").value;
+    const metodoPago = document.getElementById("cajaMetodoPago")?.value || "EFECTIVO";
     const ticketId = "TCK-" + Math.floor(10000 + Math.random() * 90000);
     const fechaHora = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
 
@@ -322,22 +360,33 @@ async function procesarCobroFirestore() {
             }
         }
 
-        document.getElementById("tckId").innerText = ticketId;
-        document.getElementById("tckCliente").innerText = clienteNombre;
-        document.getElementById("tckFecha").innerText = fechaHora;
-        document.getElementById("tckPago").innerText = metodoPago;
-        document.getElementById("tckTotal").innerText = total.toFixed(2);
+        const tckId = document.getElementById("tckId");
+        const tckCliente = document.getElementById("tckCliente");
+        const tckFecha = document.getElementById("tckFecha");
+        const tckPago = document.getElementById("tckPago");
+        const tckTotal = document.getElementById("tckTotal");
+
+        if (tckId) tckId.innerText = ticketId;
+        if (tckCliente) tckCliente.innerText = clienteNombre;
+        if (tckFecha) tckFecha.innerText = fechaHora;
+        if (tckPago) tckPago.innerText = metodoPago;
+        if (tckTotal) tckTotal.innerText = total.toFixed(2);
 
         const detalleDiv = document.getElementById("tckDetalleItems");
-        detalleDiv.innerHTML = "";
-        cajaActualItems.forEach(i => {
-            detalleDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin:2px 0;"><span>${i.cant}x ${i.desc}</span><span>$${i.subtotal.toFixed(2)}</span></div>`;
-        });
+        if (detalleDiv) {
+            detalleDiv.innerHTML = "";
+            cajaActualItems.forEach(i => {
+                detalleDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin:2px 0;"><span>${i.cant}x ${i.desc}</span><span>$${i.subtotal.toFixed(2)}</span></div>`;
+            });
+        }
 
-        document.getElementById("ticketClienteImprimir").style.display = "block";
+        const tckImprimirArea = document.getElementById("ticketClienteImprimir");
+        if (tckImprimirArea) tckImprimirArea.style.display = "block";
+
         cajaActualItems = [];
         renderTablaCaja();
     } catch (err) {
+        console.error("Error al procesar cobro:", err);
         alert("Error al procesar el cobro.");
     }
 }
@@ -366,7 +415,7 @@ function initRealtimeData() {
                         <td>${c.folio || "N/A"}</td>
                         <td>${c.paciente}</td>
                         <td>${c.servicio}</td>
-                        <td>$${c.costo.toFixed(2)}</td>
+                        <td>$${parseFloat(c.costo || 0).toFixed(2)}</td>
                         <td>
                             <button class="btn btn-sm btn-success" onclick="cargarOrdenACaja('${docId}', '${c.servicio}', '${c.paciente}', ${c.costo})">Cobrar</button>
                         </td>
@@ -399,7 +448,7 @@ function initRealtimeData() {
                         <td>${item.nombre}</td>
                         <td>${item.categoria}</td>
                         <td>${item.ubicacion}</td>
-                        <td>$${parseFloat(item.precio).toFixed(2)}</td>
+                        <td>$${parseFloat(item.precio || 0).toFixed(2)}</td>
                         <td>${item.stock}</td>
                         <td>${item.minStock}</td>
                         <td>${item.caducidad || 'N/A'}</td>
