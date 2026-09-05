@@ -47,15 +47,15 @@ function setupAuthListeners() {
             const pass = document.getElementById("loginPassword").value;
             const errDiv = document.getElementById("loginError");
 
-            try {
-                if (errDiv) errDiv.style.display = "none";
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) {
-                if (errDiv) {
-                    errDiv.innerText = "Error: Credenciales inválidas.";
-                    errDiv.style.display = "block";
-                }
-            }
+           try {
+    if (errDiv) errDiv.style.display = "none";
+    await signInWithEmailAndPassword(auth, email, pass);
+} catch (err) {
+    if (errDiv) {
+        errDiv.innerText = "Error: Credenciales inválidas.";
+        errDiv.style.display = "block";
+    }
+}
         });
     }
 
