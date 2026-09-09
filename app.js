@@ -387,23 +387,158 @@ async function procesarCobroFirestore() {
     }
 }
 
+// ----------------------------------------------------------------------
+// FUNCIONES DEL PANEL DE ADMINISTRACIÓN Y REPORTES CONTABLES / INEGI
+// ----------------------------------------------------------------------
+
 async function generarReporteContableTurno() {
-    alert("Generando reporte contable...");
+    const fechaSel = document.getElementById("reporteFecha")?.value;
+    const turnoSel = document.getElementById("reporteTurno")?.value;
+
+    if (!fechaSel) return alert("Selecciona una fecha para el reporte.");
+
+    try {
+        const snapVentas = await getDocs(ventasRef);
+        const snapConsultas = await getDocs(consultasRef);
+
+        let totalConsultasMonto = 0;
+        let totalFarmaciaMonto = 0;
+        let honorariosMedicos = 0;
+
+        snapVentas.forEach(docSnap => {
+            const v = docSnap.data();
+            if (v.fecha && v.fecha.includes(fechaSel.split('-').reverse().join('/'))) {
+                (v.items || []).forEach(item => {
+                    if (item.tipo === "CONSULTA") {
+                        totalConsultasMonto += parseFloat(item.subtotal || 0);
+                        honorariosMedicos += parseFloat(item.subtotal || 0) * 0.70;
+                    } else if (item.tipo === "MEDICAMENTO") {
+                        totalFarmaciaMonto += parseFloat(item.subtotal || 0);
+                    }
+                });
+            }
+        });
+
+        // Si la venta no usó fecha formateada similar o deseas tomarlo directamente:
+        if (totalConsultasMonto === 0 && totalFarmaciaMonto === 0) {
+            snapConsultas.forEach(docSnap => {
+                const c = docSnap.data();
+                if (c.estado === "PAGADO") {
+                    totalConsultasMonto += parseFloat(c.costo || 0);
+                    honorariosMedicos += parseFloat(c.costo || 0) * 0.70;
+                }
+            });
+        }
+
+        const ingresoNetoHospital = (totalConsultasMonto - honorariosMedicos) + totalFarmaciaMonto;
+
+        document.getElementById("repTotalConsultas").innerText = `$${totalConsultasMonto.toFixed(2)}`;
+        document.getElementById("repTotalFarmacia").innerText = `$${totalFarmaciaMonto.toFixed(2)}`;
+        document.getElementById("repHonorarios").innerText = `$${honorariosMedicos.toFixed(2)}`;
+        document.getElementById("repIngresoNeto").innerText = `$${ingresoNetoHospital.toFixed(2)}`;
+
+        const previewDiv = document.getElementById("previewReporteContable");
+        if (previewDiv) previewDiv.style.display = "block";
+
+        // Generar PDF usando jsPDF
+        const { jsPDF } = window.jspdf;
+        const docPDF = new jsPDF();
+
+        docPDF.setFontSize(16);
+        docPDF.text("HOSPITAL ROSA DEL TEPEYAC", 105, 18, { align: "center" });
+        docPDF.setFontSize(12);
+        docPDF.text("CORTE DE CAJA Y REPORTE CONTABLE DIARIO POR TURNO", 105, 26, { align: "center" });
+        
+        docPDF.line(14, 32, 196, 32);
+
+        docPDF.setFontSize(10);
+        docPDF.text(`FECHA DEL CORTE: ${fechaSel}`, 14, 40);
+        docPDF.text(`TURNO: ${turnoSel}`, 14, 46);
+        docPDF.text(`EMISIÓN: ${new Date().toLocaleString()}`, 14, 52);
+
+        docPDF.line(14, 56, 196, 56);
+
+        docPDF.setFontSize(11);
+        docPDF.text(`Total Ingresos por Consultas: $${totalConsultasMonto.toFixed(2)}`, 14, 66);
+        docPDF.text(`Total Ingresos por Farmacia / Insumos: $${totalFarmaciaMonto.toFixed(2)}`, 14, 74);
+        docPDF.text(`Honorarios Médicos a Pagar (70%): $${honorariosMedicos.toFixed(2)}`, 14, 82);
+        
+        docPDF.setFontSize(12);
+        docPDF.text(`INGRESO NETO HOSPITAL: $${ingresoNetoHospital.toFixed(2)}`, 14, 94);
+
+        docPDF.line(14, 100, 196, 100);
+
+        docPDF.text("Firma de Conformidad Contador:", 14, 130);
+        docPDF.line(14, 145, 90, 145);
+
+        docPDF.text("Firma de Recepción / Caja:", 120, 130);
+        docPDF.line(120, 145, 190, 145);
+
+        docPDF.save(`Reporte_Contable_${fechaSel}_${turnoSel}.pdf`);
+
+    } catch (err) {
+        console.error(err);
+        alert("Error al generar el reporte contable.");
+    }
 }
 
 function generarReporteInegiPDF() {
-    alert("Generando boleta INEGI...");
-    window.print();
+    const periodo = document.getElementById("inegiPeriodo")?.value || "2026";
+    const { jsPDF } = window.jspdf;
+    const docPDF = new jsPDF();
+
+    docPDF.setFontSize(14);
+    docPDF.text("INSTITUTO NACIONAL DE ESTADÍSTICA Y GEOGRAFÍA (INEGI)", 105, 18, { align: "center" });
+    docPDF.setFontSize(11);
+    docPDF.text("ESTADÍSTICA DE SALUD EN ESTABLECIMIENTOS PARTICULARES", 105, 25, { align: "center" });
+    docPDF.text(`BOLETA OFICIAL DE REGISTRO: PEC-6-20-A | PERIODO: ${periodo}`, 105, 31, { align: "center" });
+
+    docPDF.line(14, 36, 196, 36);
+
+    docPDF.setFontSize(10);
+    docPDF.text("DATOS DEL ESTABLECIMIENTO:", 14, 44);
+    docPDF.text("Nombre Institucional: HOSPITAL ROSA DEL TEPEYAC", 14, 50);
+    docPDF.text("Entidad: ESTADO DE MÉXICO", 14, 56);
+    docPDF.text("Municipio: ECATEPEC DE MORELOS", 14, 62);
+
+    docPDF.line(14, 68, 196, 68);
+
+    docPDF.text("RESUMEN ESTADÍSTICO ACUMULADO DEL PERIODO:", 14, 76);
+
+    const totalConsultas = document.getElementById("admTotalConsultas")?.innerText || "0";
+    const ventas = document.getElementById("admVentasDia")?.innerText || "$0.00";
+
+    docPDF.text(`• Total de Consultas Otorgadas: ${totalConsultas}`, 18, 84);
+    docPDF.text(`• Consultas de Medicina General y Especialidades: ${totalConsultas}`, 18, 90);
+    docPDF.text(`• Salida / Dispensación de Insumos Farmacéuticos: Registrado`, 18, 96);
+    docPDF.text(`• Movimiento Financiero Global: ${ventas}`, 18, 102);
+
+    docPDF.line(14, 110, 196, 110);
+
+    docPDF.text("Sello de Validación Institucional Hospitalaria", 14, 140);
+    docPDF.line(14, 160, 90, 160);
+
+    docPDF.text("Firma del Director Médico / Informante Responsable", 110, 140);
+    docPDF.line(110, 160, 190, 160);
+
+    docPDF.save(`Boleta_INEGI_PEC-6-20-A_${periodo}.pdf`);
 }
 
 function initRealtimeData() {
     onSnapshot(consultasRef, (snapshot) => {
         const tablaConsultas = document.getElementById("tablaConsultasPendientes");
+        const tablaReporte = document.getElementById("tablaReporteConsultas");
+        
         if (tablaConsultas) tablaConsultas.innerHTML = "";
+        if (tablaReporte) tablaReporte.innerHTML = "";
+
+        let honorariosAcumulados = 0;
+        let totalConsultasCount = 0;
 
         snapshot.forEach((docSnap) => {
             const c = docSnap.data();
             const docId = docSnap.id;
+            totalConsultasCount++;
 
             if (tablaConsultas && c.estado === 'PENDIENTE') {
                 tablaConsultas.innerHTML += `
@@ -411,20 +546,46 @@ function initRealtimeData() {
                         <td>${c.folio || "N/A"}</td>
                         <td>${c.paciente}</td>
                         <td>${c.servicio}</td>
-                        <td>$${c.costo.toFixed(2)}</td>
+                        <td>$${parseFloat(c.costo).toFixed(2)}</td>
                         <td>
                             <button class="btn btn-sm btn-success" onclick="cargarOrdenACaja('${docId}', '${c.servicio}', '${c.paciente}', ${c.costo})">Cobrar</button>
                         </td>
                     </tr>
                 `;
             }
+
+            if (tablaReporte) {
+                tablaReporte.innerHTML += `
+                    <tr>
+                        <td>${c.fecha || 'N/A'}</td>
+                        <td>${c.folio || "N/A"}</td>
+                        <td>${c.paciente}</td>
+                        <td>${c.servicio}</td>
+                        <td>${c.medico}</td>
+                        <td>$${parseFloat(c.costo).toFixed(2)}</td>
+                        <td><span class="${c.estado === 'PAGADO' ? 'text-success' : 'text-highlight'}">${c.estado}</span></td>
+                    </tr>
+                `;
+            }
+
+            if (c.estado === "PAGADO") {
+                honorariosAcumulados += (parseFloat(c.costo) || 0) * 0.70;
+            }
         });
 
         if (tablaConsultas && tablaConsultas.innerHTML === "") {
             tablaConsultas.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No hay consultas pendientes de pago</td></tr>`;
         }
-    });
 
+        if (tablaReporte && tablaReporte.innerHTML === "") {
+            tablaReporte.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No hay consultas registradas en la base de datos</td></tr>`;
+        }
+        const lblHonorarios = document.getElementById("admHonorarios");
+        const lblTotalConsultas = document.getElementById("admTotalConsultas");
+
+        if (lblHonorarios) lblHonorarios.innerText = `$${honorariosAcumulados.toFixed(2)}`;
+        if (lblTotalConsultas) lblTotalConsultas.innerText = totalConsultasCount;
+    });
     onSnapshot(inventarioRef, (snapshot) => {
         const tablaInv = document.getElementById("tablaInventarioBody");
         const selectMed = document.getElementById("selectMedPrescription");
@@ -461,36 +622,15 @@ function initRealtimeData() {
             }
         });
     });
-
     onSnapshot(ventasRef, (snapshot) => {
         let totalIngresos = 0;
-        let totalVentasContador = 0;
-        const tablaVentas = document.getElementById("tablaVentasAdmin");
-
-        if (tablaVentas) tablaVentas.innerHTML = "";
 
         snapshot.forEach((docSnap) => {
             const venta = docSnap.data();
             totalIngresos += parseFloat(venta.total || 0);
-            totalVentasContador++;
-
-            if (tablaVentas) {
-                tablaVentas.innerHTML += `
-                    <tr>
-                        <td>${venta.ticketId || "N/A"}</td>
-                        <td>${venta.cliente}</td>
-                        <td>$${parseFloat(venta.total).toFixed(2)}</td>
-                        <td>${venta.metodoPago}</td>
-                        <td>${venta.fecha}</td>
-                    </tr>
-                `;
-            }
         });
 
-        const lblTotalIngresos = document.getElementById("adminTotalIngresos");
-        const lblTotalVentas = document.getElementById("adminTotalVentas");
-
-        if (lblTotalIngresos) lblTotalIngresos.innerText = `$${totalIngresos.toFixed(2)}`;
-        if (lblTotalVentas) lblTotalVentas.innerText = totalVentasContador;
+        const lblVentasDia = document.getElementById("admVentasDia");
+        if (lblVentasDia) lblVentasDia.innerText = `$${totalIngresos.toFixed(2)}`;
     });
 }
