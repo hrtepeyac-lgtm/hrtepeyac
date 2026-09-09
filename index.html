@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Hospitalario Integrado - Hospital Rosa del Tepeyac</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+    <div id="login-screen" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="ITEMS/logo.jpeg" alt="Hospital Rosa del Tepeyac Logo" class="login-logo">
+                <h2>Hospital Rosa del Tepeyac</h2>
+                <p class="text-muted text-center margin-bottom-15">Ingresa tu correo y tu contraseña</p>
+            </div>
+            <form id="formLogin">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="loginEmail" required placeholder="usuario@hospital.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn">Iniciar Sesión</button>
+            </form>
+            <div id="loginError" class="error-msg margin-top-10" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div id="app-screen" style="display:none;">
+        <header>
+            <div class="hospital-title">
+                <img src="ITEMS/logo.jpeg" alt="Hospital Rosa del Tepeyac Logo" class="header-logo">
+                Hospital Rosa del Tepeyac <span>| ERP</span>
+            </div>
+            <div class="user-info">
+                <span id="userDisplayEmail" class="text-bold"></span>
+                <span id="userDisplayRole" class="badge-role"></span>
+                <button id="btnLogout" class="btn btn-danger btn-auto">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <nav id="mainNav" class="no-print"></nav>
+
+        <main>
+            <section id="sec-mod" class="module">
+                <div class="grid-2">
+                    <div class="card">
+                        <h2>Registrar Consulta / Emitir Orden a Caja</h2>
+                        <form id="formConsulta">
+                            <div class="form-group">
+                                <label>Nombre del Paciente:</label>
+                                <input type="text" id="pacienteNombre" required placeholder="Ej. Juan Pérez López">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Atención / Especialidad:</label>
+                                <select id="consultaTipo" required>
+                                    <option value="Consulta General" data-costo="300">Consulta General ($300)</option>
+                                    <option value="Gineco-Obstétrica" data-costo="600">Gineco-Obstétrica ($600)</option>
+                                    <option value="Pediatría" data-costo="500">Pediatría ($500)</option>
+                                    <option value="Cirugía / Especialidad" data-costo="820">Cirugía / Especialidad
+                                        ($820)</option>
+                                    <option value="Odontología" data-costo="400">Odontología ($400)</option>
+                                    <option value="Urgencias" data-costo="700">Urgencias ($700)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Médico Tratante:</label>
+                                <select id="medicoSelect" required>
+                                    <option value="Dra. Gisela Vargas">Dra. Gisela Vargas (Ginecología)</option>
+                                    <option value="Dr. Roberto Gómez">Dr. Roberto Gómez (Pediatría)</option>
+                                    <option value="Dr. Carlos Mendoza">Dr. Carlos Mendoza (Medicina General)</option>
+                                    <option value="Dra. Elena Rostro">Dra. Elena Rostro (Cirugía)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Consultorio Asignado:</label>
+                                <input type="text" id="consultorio" required placeholder="Ej. Consultorio 3">
+                            </div>
+                            <div class="form-group">
+                                <label>Costo de la Consulta ($):</label>
+                                <input type="number" id="costoConsulta" value="300" readonly class="input-readonly">
+                            </div>
+                            <button type="submit" class="btn">Enviar Orden a Caja / Farmacia</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Ficha de Registro Enviada</h2>
+                        <div id="ticketGenerated" class="ticket-box" style="display:none;">
+                            <h3 class="text-center">HOSPITAL ROSA DEL TEPEYAC</h3>
+                            <p class="text-center text-sm">Orden enviada a Caja</p>
+                            <hr class="divider">
+                            <p><b>FOLIO:</b> <span id="lblFolio" class="text-highlight"></span></p>
+                            <p><b>PACIENTE:</b> <span id="lblPaciente"></span></p>
+                            <p><b>MÉDICO:</b> <span id="lblMedico"></span></p>
+                            <p><b>CONSULTORIO:</b> <span id="lblConsultorio"></span></p>
+                            <p><b>SERVICIO:</b> <span id="lblServicio"></span></p>
+                            <p><b>TOTAL:</b> <span id="lblTotal" class="text-bold text-lg"></span></p>
+                            <hr class="divider">
+                            <p class="text-sm text-center">Diríjase a Caja para realizar el pago de su ticket.</p>
+                        </div>
+                        <div id="ticketPlaceholder" class="placeholder-box">
+                            Complete el formulario para enviar la orden a caja.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="farm-mod" class="module">
+                <div class="grid-2">
+                    <div class="card">
+                        <h2>Consultas Pendientes de Pago (Enviadas por Recepción)</h2>
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Paciente</th>
+                                        <th>Servicio</th>
+                                        <th>Monto</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaConsultasPendientes">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Cargando órdenes de recepción...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr class="divider margin-top-20">
+                        <h3>Agregar Medicamento / Insumo a la Caja</h3>
+                        <div class="form-group margin-top-10">
+                            <label>Seleccionar de Inventario:</label>
+                            <select id="selectMedPrescription">
+                                <option value="">-- Seleccionar producto --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad:</label>
+                            <input type="number" id="cantMedPrescription" value="1" min="1">
+                        </div>
+                        <button type="button" id="btnAgregarMed" class="btn margin-top-10">Agregar a Caja</button>
+                    </div>
+
+                    <div class="card">
+                        <h2>Punto de Venta (PDV) y Cobro</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th>Cant.</th>
+                                    <th>Precio</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cajaItems">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No hay ítems cargados en la caja</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="form-group margin-top-15">
+                            <label>Nombre del Comprador / Cliente:</label>
+                            <input type="text" id="cajaNombreCliente" placeholder="Nombre del cliente">
+                        </div>
+
+                        <div class="form-group margin-top-15">
+                            <label>Método de Pago:</label>
+                            <select id="cajaMetodoPago">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Tarjeta de Crédito/Débito">Tarjeta de Crédito/Débito</option>
+                                <option value="Transferencia">Transferencia Electrónica</option>
+                            </select>
+                        </div>
+                        <div class="margin-top-15 text-right">
+                            <h3>Total a Cobrar: <span id="cajaTotal" class="text-success text-xl">$0.00</span></h3>
+                        </div>
+                        <button id="btnProcessPayment" class="btn btn-success margin-top-15">Cobrar e Imprimir Ticket
+                            Cliente</button>
+
+                        <div id="ticketClienteImprimir" class="ticket-box margin-top-15" style="display:none;">
+                            <div id="printableTicketArea" class="printable-ticket">
+                                <h3 class="text-center" style="margin:0; font-size:14px; font-weight:bold;">HOSPITAL
+                                    ROSA DEL TEPEYAC</h3>
+                                <p class="text-center" style="font-size:10px; margin:2px 0;">RFC: HRT900101XXX | Tel:
+                                    55-5555-5555</p>
+                                <p class="text-center" style="font-size:10px; margin:2px 0;">Ticket de Compra /
+                                    Comprobante</p>
+                                <hr style="border-top:1px dashed #000; margin:5px 0;">
+                                <p style="font-size:11px; margin:2px 0;"><b>TICKET ID:</b> <span id="tckId"></span></p>
+                                <p style="font-size:11px; margin:2px 0;"><b>CLIENTE:</b> <span id="tckCliente"></span>
+                                </p>
+                                <p style="font-size:11px; margin:2px 0;"><b>FECHA:</b> <span id="tckFecha"></span></p>
+                                <p style="font-size:11px; margin:2px 0;"><b>MÉTODO PAGO:</b> <span id="tckPago"></span>
+                                </p>
+                                <hr style="border-top:1px dashed #000; margin:5px 0;">
+                                <div id="tckDetalleItems" style="font-size:11px;"></div>
+                                <hr style="border-top:1px dashed #000; margin:5px 0;">
+                                <p style="font-size:13px; text-align:right; margin:3px 0;"><b>TOTAL: $<span
+                                            id="tckTotal"></span> MXN</b></p>
+                                <hr style="border-top:1px dashed #000; margin:5px 0;">
+                                <p class="text-center" style="font-size:10px; margin-top:5px; font-weight:bold;">
+                                    ¿REQUIERE FACTURA?</p>
+                                <p class="text-center" style="font-size:9px; margin:2px 0;">Ingrese a:
+                                    www.hospitalrosadeltepeyac.com/facturacion</p>
+                                <p class="text-center" style="font-size:9px; margin:2px 0;">Ingrese su Ticket ID y datos
+                                    fiscales.</p>
+                            </div>
+                            <button id="btnPrintTicketNow" class="btn btn-secondary btn-sm no-print margin-top-10"
+                                style="width:100%;">Imprimir Ticket Térmico</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card margin-top-20">
+                    <h2>Manipulación de Inventario</h2>
+                    <form id="formInventario" class="grid-3 margin-bottom-15">
+                        <div class="form-group">
+                            <label>Código:</label>
+                            <input type="text" id="invCodigo" required placeholder="MED-001">
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre del Medicamento o Insumo:</label>
+                            <input type="text" id="invNombre" required placeholder="Paracetamol 500mg">
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría:</label>
+                            <input type="text" id="invCat" required placeholder="Analgesia">
+                        </div>
+                        <div class="form-group">
+                            <label>Ubicación:</label>
+                            <input type="text" id="invUbicacion" required placeholder="Estante A-2">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Venta ($):</label>
+                            <input type="number" step="0.01" id="invPrecio" required placeholder="45.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Stock Inicial / Añadir:</label>
+                            <input type="number" id="invStock" required placeholder="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Stock Mínimo:</label>
+                            <input type="number" id="invMinStock" required placeholder="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Caducidad:</label>
+                            <input type="date" id="invCaducidad" required>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button type="submit" class="btn btn-success">Guardar / Actualizar Insumo</button>
+                        </div>
+                    </form>
+
+                    <h3>Existencias en Tiempo Real</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Insumo</th>
+                                <th>Categoría</th>
+                                <th>Ubicación</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Stock Mín.</th>
+                                <th>Caducidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaInventarioBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="adm-mod" class="module">
+                <div class="grid-3">
+                    <div class="card stat-card">
+                        <h3>Ventas Totales Acumuladas</h3>
+                        <h2 id="admVentasDia" class="stat-number text-success">$0.00</h2>
+                        <p class="stat-desc">Suma real de caja Firestore</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3>Honorarios Médicos (70%)</h3>
+                        <h2 id="admHonorarios" class="stat-number text-primary">$0.00</h2>
+                        <p class="stat-desc">Cálculo real sobre consultas pagadas</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3>Total Consultas Atendidas</h3>
+                        <h2 id="admTotalConsultas" class="stat-number text-dark">0</h2>
+                        <p class="stat-desc">Registros reales de base de datos</p>
+                    </div>
+                </div>
+
+                <div class="card margin-top-20">
+                    <h2>Reporte Contable Diario por Turnos (Para Contador)</h2>
+                    <p class="text-sm text-muted margin-bottom-15">Genera el desglose financiero filtrado por fecha y
+                        turno operativo.</p>
+
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label>Seleccionar Fecha:</label>
+                            <input type="date" id="reporteFecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Seleccionar Turno:</label>
+                            <select id="reporteTurno">
+                                <option value="Día">Turno Día (07:00 - 19:00 hrs)</option>
+                                <option value="Noche">Turno Noche (19:00 - 07:00 hrs)</option>
+                                <option value="Completo">Día Completo (24 hrs)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button id="btnGenerarReporteContable" class="btn btn-success">Descargar PDF
+                                Contable</button>
+                        </div>
+                    </div>
+
+                    <div id="previewReporteContable" class="margin-top-15 report-preview-box" style="display:none;">
+                        <h3>Resumen del Corte:</h3>
+                        <p>• <b>Total Consultas Médicas:</b> <span id="repTotalConsultas">$0.00</span></p>
+                        <p>• <b>Total Ventas Farmacia/Caja:</b> <span id="repTotalFarmacia">$0.00</span></p>
+                        <p>• <b>Honorarios Médicos a Pagar (70%):</b> <span id="repHonorarios">$0.00</span></p>
+                        <p>• <b>Ingreso Neto Hospital:</b> <span id="repIngresoNeto"
+                                class="text-bold text-success">$0.00</span></p>
+                    </div>
+                </div>
+
+                <div class="card margin-top-20">
+                    <h2>Reporte Estadístico Oficial INEGI (Boleta PEC-6-20-A)</h2>
+                    <p class="text-sm text-muted margin-bottom-15">Genera la boleta oficial precargada con datos del
+                        hospital y estadísticas automáticas para entrega institucional.</p>
+
+                    <div class="grid-3 margin-bottom-15">
+                        <div class="form-group">
+                            <label>Seleccionar Periodo / Año:</label>
+                            <input type="text" id="inegiPeriodo" class="form-control" value="1er SEM. 2026">
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button id="btnGenerarReporteInegi" class="btn btn-secondary btn-auto">Descargar Boleta
+                                INEGI Llenada (PDF)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card margin-top-20">
+                    <h2>Informe Consolidado de Consultas Registradas</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Folio</th>
+                                <th>Paciente</th>
+                                <th>Servicio</th>
+                                <th>Médico</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaReporteConsultas"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="JS/firebase-config.js"></script>
+    <script type="module" src="JS/app.js"></script>
+</body>
+
+</html>
