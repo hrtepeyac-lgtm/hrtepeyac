@@ -1,11 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
-import { 
-    getAuth, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { 
     getFirestore, 
     collection, 
@@ -21,7 +16,6 @@ import {
     where 
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
-// Credenciales actualizadas para el proyecto hrtepeyac-d7722
 const firebaseConfig = {
     apiKey: "AIzaSyBgfcS38ZMU3Ox8kemqcMuIneRjzBdqdZk",
     authDomain: "hrtepeyac-d7722.firebaseapp.com",
