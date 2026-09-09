@@ -13,7 +13,7 @@ import {
     onSnapshot, 
     query, 
     where 
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBgfcS38ZMU3Ox8kemqcMuIneRjzBdqdZk",
