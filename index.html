@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 
 <body>
@@ -67,8 +68,7 @@
                                     <option value="Consulta General" data-costo="300">Consulta General ($300)</option>
                                     <option value="Gineco-Obstétrica" data-costo="600">Gineco-Obstétrica ($600)</option>
                                     <option value="Pediatría" data-costo="500">Pediatría ($500)</option>
-                                    <option value="Cirugía / Especialidad" data-costo="820">Cirugía / Especialidad
-                                        ($820)</option>
+                                    <option value="Cirugía / Especialidad" data-costo="820">Cirugía / Especialidad ($820)</option>
                                     <option value="Odontología" data-costo="400">Odontología ($400)</option>
                                     <option value="Urgencias" data-costo="700">Urgencias ($700)</option>
                                 </select>
@@ -76,6 +76,7 @@
                             <div class="form-group">
                                 <label>Médico Tratante:</label>
                                 <select id="medicoSelect" required>
+                                    <option value="Dra. Erika Maldonado">Dra. Erika Maldonado (Radiología / Ultrasonido)</option>
                                     <option value="Dra. Gisela Vargas">Dra. Gisela Vargas (Ginecología)</option>
                                     <option value="Dr. Roberto Gómez">Dr. Roberto Gómez (Pediatría)</option>
                                     <option value="Dr. Carlos Mendoza">Dr. Carlos Mendoza (Medicina General)</option>
@@ -133,8 +134,7 @@
                                 </thead>
                                 <tbody id="tablaConsultasPendientes">
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">Cargando órdenes de recepción...
-                                        </td>
+                                        <td colspan="5" class="text-center text-muted">Cargando órdenes de recepción...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -189,39 +189,29 @@
                         <div class="margin-top-15 text-right">
                             <h3>Total a Cobrar: <span id="cajaTotal" class="text-success text-xl">$0.00</span></h3>
                         </div>
-                        <button id="btnProcessPayment" class="btn btn-success margin-top-15">Cobrar e Imprimir Ticket
-                            Cliente</button>
+                        <button id="btnProcessPayment" class="btn btn-success margin-top-15">Cobrar e Imprimir Ticket Cliente</button>
 
                         <div id="ticketClienteImprimir" class="ticket-box margin-top-15" style="display:none;">
                             <div id="printableTicketArea" class="printable-ticket">
-                                <h3 class="text-center" style="margin:0; font-size:14px; font-weight:bold;">HOSPITAL
-                                    ROSA DEL TEPEYAC</h3>
-                                <p class="text-center" style="font-size:10px; margin:2px 0;">RFC: HRT900101XXX | Tel:
-                                    55-5555-5555</p>
-                                <p class="text-center" style="font-size:10px; margin:2px 0;">Ticket de Compra /
-                                    Comprobante</p>
+                                <h3 class="text-center" style="margin:0; font-size:14px; font-weight:bold;">HOSPITAL ROSA DEL TEPEYAC</h3>
+                                <p class="text-center" style="font-size:10px; margin:2px 0;">RFC: HRT900101XXX | Tel: 55-5555-5555</p>
+                                <p class="text-center" style="font-size:10px; margin:2px 0;">Ticket de Compra / Comprobante</p>
                                 <hr style="border-top:1px dashed #000; margin:5px 0;">
                                 <p style="font-size:11px; margin:2px 0;"><b>TICKET ID:</b> <span id="tckId"></span></p>
-                                <p style="font-size:11px; margin:2px 0;"><b>CLIENTE:</b> <span id="tckCliente"></span>
-                                </p>
+                                <p style="font-size:11px; margin:2px 0;"><b>CLIENTE:</b> <span id="tckCliente"></span></p>
                                 <p style="font-size:11px; margin:2px 0;"><b>FECHA:</b> <span id="tckFecha"></span></p>
-                                <p style="font-size:11px; margin:2px 0;"><b>MÉTODO PAGO:</b> <span id="tckPago"></span>
-                                </p>
+                                <p style="font-size:11px; margin:2px 0;"><b>MÉDICO/SERVICIO:</b> <span id="tckServicioInfo"></span></p>
+                                <p style="font-size:11px; margin:2px 0;"><b>MÉTODO PAGO:</b> <span id="tckPago"></span></p>
                                 <hr style="border-top:1px dashed #000; margin:5px 0;">
                                 <div id="tckDetalleItems" style="font-size:11px;"></div>
                                 <hr style="border-top:1px dashed #000; margin:5px 0;">
-                                <p style="font-size:13px; text-align:right; margin:3px 0;"><b>TOTAL: $<span
-                                            id="tckTotal"></span> MXN</b></p>
+                                <p style="font-size:13px; text-align:right; margin:3px 0;"><b>TOTAL: $<span id="tckTotal"></span> MXN</b></p>
                                 <hr style="border-top:1px dashed #000; margin:5px 0;">
-                                <p class="text-center" style="font-size:10px; margin-top:5px; font-weight:bold;">
-                                    ¿REQUIERE FACTURA?</p>
-                                <p class="text-center" style="font-size:9px; margin:2px 0;">Ingrese a:
-                                    www.hospitalrosadeltepeyac.com/facturacion</p>
-                                <p class="text-center" style="font-size:9px; margin:2px 0;">Ingrese su Ticket ID y datos
-                                    fiscales.</p>
+                                <p class="text-center" style="font-size:10px; margin-top:5px; font-weight:bold;">¿REQUIERE FACTURA?</p>
+                                <p class="text-center" style="font-size:9px; margin:2px 0;">Ingrese a: www.hospitalrosadeltepeyac.com/facturacion</p>
+                                <p class="text-center" style="font-size:9px; margin:2px 0;">Ingrese su Ticket ID y datos fiscales.</p>
                             </div>
-                            <button id="btnPrintTicketNow" class="btn btn-secondary btn-sm no-print margin-top-10"
-                                style="width:100%;">Imprimir Ticket Térmico</button>
+                            <button id="btnPrintTicketNow" class="btn btn-secondary btn-sm no-print margin-top-10" style="width:100%;">Imprimir Ticket Térmico</button>
                         </div>
                     </div>
                 </div>
@@ -278,6 +268,7 @@
                                 <th>Stock</th>
                                 <th>Stock Mín.</th>
                                 <th>Caducidad</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaInventarioBody"></tbody>
@@ -305,9 +296,54 @@
                 </div>
 
                 <div class="card margin-top-20">
+                    <h2>Generador de Hoja de Honorarios por Médico (PDF)</h2>
+                    <p class="text-sm text-muted margin-bottom-15">Genera la liquidación de sueldo/honorarios descargable para evitar el control manual en Excel.</p>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label>Seleccionar Médico:</label>
+                            <select id="honMedicoSelect">
+                                <option value="Dra. Erika Maldonado">Dra. Erika Maldonado</option>
+                                <option value="Dra. Gisela Vargas">Dra. Gisela Vargas</option>
+                                <option value="Dr. Roberto Gómez">Dr. Roberto Gómez</option>
+                                <option value="Dr. Carlos Mendoza">Dr. Carlos Mendoza</option>
+                                <option value="Dra. Elena Rostro">Dra. Elena Rostro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Porcentaje Honorarios (%):</label>
+                            <input type="number" id="honPorcentaje" value="70">
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button id="btnGenerarPDFHonorarios" class="btn btn-primary">Descargar Recibo de Honorarios (PDF)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card margin-top-20">
+                    <h2>Control de Facturación de Tickets</h2>
+                    <p class="text-sm text-muted margin-bottom-15">Visualización de tickets cobrados y su estatus de emisión de factura en el portal web.</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha / Hora</th>
+                                <th>Ticket ID</th>
+                                <th>Cliente / Paciente</th>
+                                <th>Monto Total</th>
+                                <th>Método Pago</th>
+                                <th>Estatus Facturación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaFacturacionAdmin">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Cargando compras y tickets...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card margin-top-20">
                     <h2>Reporte Contable Diario por Turnos (Para Contador)</h2>
-                    <p class="text-sm text-muted margin-bottom-15">Genera el desglose financiero filtrado por fecha y
-                        turno operativo.</p>
+                    <p class="text-sm text-muted margin-bottom-15">Genera el desglose financiero filtrado por fecha y turno operativo.</p>
 
                     <div class="grid-3">
                         <div class="form-group">
@@ -323,8 +359,7 @@
                             </select>
                         </div>
                         <div class="form-group" style="display:flex; align-items:flex-end;">
-                            <button id="btnGenerarReporteContable" class="btn btn-success">Descargar PDF
-                                Contable</button>
+                            <button id="btnGenerarReporteContable" class="btn btn-success">Descargar PDF Contable</button>
                         </div>
                     </div>
 
@@ -333,24 +368,21 @@
                         <p>• <b>Total Consultas Médicas:</b> <span id="repTotalConsultas">$0.00</span></p>
                         <p>• <b>Total Ventas Farmacia/Caja:</b> <span id="repTotalFarmacia">$0.00</span></p>
                         <p>• <b>Honorarios Médicos a Pagar (70%):</b> <span id="repHonorarios">$0.00</span></p>
-                        <p>• <b>Ingreso Neto Hospital:</b> <span id="repIngresoNeto"
-                                class="text-bold text-success">$0.00</span></p>
+                        <p>• <b>Ingreso Neto Hospital:</b> <span id="repIngresoNeto" class="text-bold text-success">$0.00</span></p>
                     </div>
                 </div>
 
                 <div class="card margin-top-20">
                     <h2>Reporte Estadístico Oficial INEGI (Boleta PEC-6-20-A)</h2>
-                    <p class="text-sm text-muted margin-bottom-15">Genera la boleta oficial precargada con datos del
-                        hospital y estadísticas automáticas para entrega institucional.</p>
+                    <p class="text-sm text-muted margin-bottom-15">Genera la boleta oficial precargada con datos del hospital y estadísticas automáticas mensuales para entrega institucional.</p>
 
                     <div class="grid-3 margin-bottom-15">
                         <div class="form-group">
-                            <label>Seleccionar Periodo / Año:</label>
-                            <input type="text" id="inegiPeriodo" class="form-control" value="1er SEM. 2026">
+                            <label>Seleccionar Mes y Año:</label>
+                            <input type="month" id="inegiPeriodo" class="form-control">
                         </div>
                         <div class="form-group" style="display:flex; align-items:flex-end;">
-                            <button id="btnGenerarReporteInegi" class="btn btn-secondary btn-auto">Descargar Boleta
-                                INEGI Llenada (PDF)</button>
+                            <button id="btnGenerarReporteInegi" class="btn btn-secondary btn-auto">Descargar Boleta INEGI Llenada (PDF)</button>
                         </div>
                     </div>
                 </div>
@@ -371,6 +403,61 @@
                         </thead>
                         <tbody id="tablaReporteConsultas"></tbody>
                     </table>
+                </div>
+            </section>
+
+            <section id="ultra-mod" class="module">
+                <div class="card">
+                    <h2>Módulo de Ultrasonido Obstetrico y Estudio Radiológico</h2>
+                    <form id="formUltrasonido">
+                        <div class="grid-3">
+                            <div class="form-group">
+                                <label>Nombre del Paciente:</label>
+                                <input type="text" id="ultraPaciente" required placeholder="Ej. María López">
+                            </div>
+                            <div class="form-group">
+                                <label>Edad:</label>
+                                <input type="number" id="ultraEdad" required placeholder="25">
+                            </div>
+                            <div class="form-group">
+                                <label>Correo del Paciente:</label>
+                                <input type="email" id="ultraCorreo" required placeholder="paciente@gmail.com">
+                            </div>
+                        </div>
+
+                        <div class="form-group margin-top-10">
+                            <label>Seleccionar Capturas de Imagen (OBS / Capturadora):</label>
+                            <input type="file" id="ultraImagenes" multiple accept="image/*">
+                        </div>
+
+                        <div class="form-group margin-top-10">
+                            <label>Texto del Reporte / Diagnóstico (Editable):</label>
+                            <textarea id="ultraTextoReporte" rows="10" style="width:100%; padding:10px; font-family:sans-serif; border:1px solid #cbd5e1; border-radius:6px;">ULTRASONIDO OBSTETRICO
+
+SE REALIZA EL PRESENTE ESTUDIO DE ULTRASONIDO EN TIEMPO REAL UTILIZANDO TRANSDUCTOR CONVEXO DE 5 MHz DE FRECUENCIA CON ALTA RESOLUCION EN DONDE PODEMOS OBSERVAR LOS SIGUIENTES HALLAZGOS:
+
+UTERO: AUMENTADO DE TAMAÑO DEBIDO A GESTACION CON LA PRESENCIA DE PRODUCTO UNICO VIVO, ACTIVO, UBICADO EN SITUACION LONGITUDINAL, PRESENTACION CEFALICA Y DORSO HACIA LA IZQUIERDA. AL MOMENTO DEL ESTUDIO, CUENTA CON FRECUENCIA RITMICA DE LATIDOS POR MINUTO SIN FENOMENOS ANORMALES VALORABLES DURANTE EL ESTUDIO. MORFOGENICAMENTE SE OBSERVA INTEGRO SIN EVIDENCIA DE MALFORMACIONES, SOMBRA GASTRICA Y VESICAL CON LLENADO Y MORFOLOGIA NORMALES. SE OBSERVA ADECUADO CIERRE DEL TUBO NEURAL. CERVIX CERRADO EN SUS 2 ORIFICIOS Y CANAL INTERNO.
+PLACENTA: DE IMPLANTACION NORMAL DE INSERCION FUNDOCORPORAL POSTERIOR, CON GRADO DE MADUREZ SEGUN ESCALA DE GRANNUM SIN EVIDENCIA DE HEMATOMAS O DESPRENDIMIENTO AL MOMENTO DEL ESTUDIO.
+CORDON UMBILICAL: CONSTITUIDO DE 3 ESTRUCTURAS (2 ARTERIAS Y 1 VENA), NO SE IDENTIFICAN CIRCULARES AL MOMENTO DEL ESTUDIO.
+LIQUIDO AMNIOTICO: CUALITATIVAMENTE HOMOGENEO. EL VOLUMEN ES ADECUADO PARA LA EDAD GESTACIONAL.
+
+SOMATOMETRIA:
+DBP: mm
+LF: mm
+LH: mm
+P.CEF: mm
+P.ABD: mm
+
+IDX: EMBARAZO DE SEMANAS DE GESTACION PROMEDIO POR FETOMETRIA.
+PESO APROXIMADO: GR.
+
+ATENTAMENTE:
+DRA. ERIKA MALDONADO
+RADIOLOGIA E IMAGEN</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success margin-top-15">Generar PDF y Enviar por Correo al Paciente</button>
+                    </form>
                 </div>
             </section>
         </main>
