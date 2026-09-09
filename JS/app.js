@@ -33,30 +33,22 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function setupAuthListeners() {
-    const formLogin = document.getElementById("formLogin");
-    if (formLogin) {
-        formLogin.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = document.getElementById("loginEmail").value;
-            const pass = document.getElementById("loginPassword").value;
-            const errDiv = document.getElementById("loginError");
+    document.getElementById("formLogin").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("loginEmail").value;
+        const pass = document.getElementById("loginPassword").value;
+        const errDiv = document.getElementById("loginError");
 
-            try {
-                if (errDiv) errDiv.style.display = "none";
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) {
-                if (errDiv) {
-                    errDiv.innerText = "Error: Credenciales inválidas.";
-                    errDiv.style.display = "block";
-                }
-            }
-        });
-    }
+        try {
+            errDiv.style.display = "none";
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (err) {
+            errDiv.innerText = "Error: Credenciales inválidas.";
+            errDiv.style.display = "block";
+        }
+    });
 
-    const btnLogout = document.getElementById("btnLogout");
-    if (btnLogout) {
-        btnLogout.addEventListener("click", () => signOut(auth));
-    }
+    document.getElementById("btnLogout").addEventListener("click", () => signOut(auth));
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -68,43 +60,33 @@ function setupAuthListeners() {
                 currentUserRole = "secretaria"; 
             }
 
-            const emailEl = document.getElementById("userDisplayEmail");
-            const roleEl = document.getElementById("userDisplayRole");
-            const loginScreen = document.getElementById("login-screen");
-            const appScreen = document.getElementById("app-screen");
-
-            if (emailEl) emailEl.innerText = user.email;
-            if (roleEl) roleEl.innerText = currentUserRole;
-            if (loginScreen) loginScreen.style.display = "none";
-            if (appScreen) appScreen.style.display = "block";
+            document.getElementById("userDisplayEmail").innerText = user.email;
+            document.getElementById("userDisplayRole").innerText = currentUserRole;
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("app-screen").style.display = "block";
 
             configureUIByRole(currentUserRole);
             initRealtimeData();
         } else {
-            const loginScreen = document.getElementById("login-screen");
-            const appScreen = document.getElementById("app-screen");
-            if (loginScreen) loginScreen.style.display = "flex";
-            if (appScreen) appScreen.style.display = "none";
+            document.getElementById("login-screen").style.display = "flex";
+            document.getElementById("app-screen").style.display = "none";
         }
     });
 }
 
 function configureUIByRole(role) {
     const nav = document.getElementById("mainNav");
-    if (!nav) return;
     nav.innerHTML = "";
 
     document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
 
     if (role === "secretaria") {
         nav.innerHTML = '<button class="tab-btn active" data-mod="sec-mod">📋 Recepción (Secretaría)</button>';
-        const secMod = document.getElementById("sec-mod");
-        if (secMod) secMod.classList.add("active");
+        document.getElementById("sec-mod").classList.add("active");
     } 
     else if (role === "farmacia") {
         nav.innerHTML = '<button class="tab-btn active" data-mod="farm-mod">💊 Farmacia, Caja e Inventario</button>';
-        const farmMod = document.getElementById("farm-mod");
-        if (farmMod) farmMod.classList.add("active");
+        document.getElementById("farm-mod").classList.add("active");
     } 
     else if (role === "admin") {
         nav.innerHTML = `
@@ -112,46 +94,30 @@ function configureUIByRole(role) {
             <button class="tab-btn" data-mod="sec-mod">📋 Recepción</button>
             <button class="tab-btn" data-mod="farm-mod">💊 Farmacia / Inventario</button>
         `;
-        const admMod = document.getElementById("adm-mod");
-        if (admMod) admMod.classList.add("active");
+        document.getElementById("adm-mod").classList.add("active");
 
         nav.querySelectorAll(".tab-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 nav.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
                 document.querySelectorAll(".module").forEach(m => m.classList.remove("active"));
                 btn.classList.add("active");
-                const targetMod = document.getElementById(btn.getAttribute("data-mod"));
-                if (targetMod) targetMod.classList.add("active");
+                document.getElementById(btn.getAttribute("data-mod")).classList.add("active");
             });
         });
     }
 }
 
 function setupEventListeners() {
-    const consultaTipo = document.getElementById("consultaTipo");
-    if (consultaTipo) {
-        consultaTipo.addEventListener("change", (e) => {
-            const selected = e.target.options[e.target.selectedIndex];
-            const costoConsulta = document.getElementById("costoConsulta");
-            if (costoConsulta) costoConsulta.value = selected.getAttribute("data-costo");
-        });
-    }
+    document.getElementById("consultaTipo").addEventListener("change", (e) => {
+        const selected = e.target.options[e.target.selectedIndex];
+        document.getElementById("costoConsulta").value = selected.getAttribute("data-costo");
+    });
 
-    const formConsulta = document.getElementById("formConsulta");
-    if (formConsulta) formConsulta.addEventListener("submit", guardarConsulta);
-
-    const selectMed = document.getElementById("selectMedPrescription");
-    if (selectMed) selectMed.addEventListener("change", agregarMedicamentoACaja);
-
-    const btnProcess = document.getElementById("btnProcessPayment");
-    if (btnProcess) btnProcess.addEventListener("click", procesarCobroFirestore);
-
-    const formInventario = document.getElementById("formInventario");
-    if (formInventario) formInventario.addEventListener("submit", guardarInventarioFirestore);
-
-    const btnReporteContable = document.getElementById("btnGenerarReporteContable");
-    if (btnReporteContable) btnReporteContable.addEventListener("click", generarReporteContableTurno);
-
+    document.getElementById("formConsulta").addEventListener("submit", guardarConsulta);
+    document.getElementById("selectMedPrescription").addEventListener("change", agregarMedicamentoACaja);
+    document.getElementById("btnProcessPayment").addEventListener("click", procesarCobroFirestore);
+    document.getElementById("formInventario").addEventListener("submit", guardarInventarioFirestore);
+    document.getElementById("btnGenerarReporteContable").addEventListener("click", generarReporteContableTurno);
     document.getElementById("btnGenerarReporteInegi")?.addEventListener("click", generarReporteInegiPDF);
     document.getElementById("btnPrintTicketNow")?.addEventListener("click", () => window.print());
 }
@@ -208,8 +174,8 @@ window.cargarOrdenACaja = function(docId, servicio, paciente, costo) {
 
 function agregarMedicamentoACaja() {
     const select = document.getElementById("selectMedPrescription");
-    if (!select || !select.value) return;
     const selectedOption = select.options[select.selectedIndex];
+    if (!select.value) return;
 
     const id = select.value;
     const nombre = selectedOption.getAttribute("data-nombre");
@@ -232,7 +198,6 @@ function agregarMedicamentoACaja() {
 
 function renderTablaCaja() {
     const tbody = document.getElementById("cajaItems");
-    if (!tbody) return;
     tbody.innerHTML = "";
     let total = 0;
 
@@ -248,8 +213,7 @@ function renderTablaCaja() {
         `;
     });
 
-    const cajaTotal = document.getElementById("cajaTotal");
-    if (cajaTotal) cajaTotal.innerText = `$${total.toFixed(2)}`;
+    document.getElementById("cajaTotal").innerText = `$${total.toFixed(2)}`;
 }
 
 async function procesarCobroFirestore() {
@@ -288,15 +252,12 @@ async function procesarCobroFirestore() {
         document.getElementById("tckTotal").innerText = total.toFixed(2);
 
         const detalleDiv = document.getElementById("tckDetalleItems");
-        if (detalleDiv) {
-            detalleDiv.innerHTML = "";
-            cajaActualItems.forEach(i => {
-                detalleDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin:2px 0;"><span>${i.cant}x ${i.desc}</span><span>$${i.subtotal.toFixed(2)}</span></div>`;
-            });
-        }
+        detalleDiv.innerHTML = "";
+        cajaActualItems.forEach(i => {
+            detalleDiv.innerHTML += `<div style="display:flex; justify-content:space-between; margin:2px 0;"><span>${i.cant}x ${i.desc}</span><span>$${i.subtotal.toFixed(2)}</span></div>`;
+        });
 
-        const ticketCliente = document.getElementById("ticketClienteImprimir");
-        if (ticketCliente) ticketCliente.style.display = "block";
+        document.getElementById("ticketClienteImprimir").style.display = "block";
 
         alert(`💵 Cobro procesado con éxito. Ticket Generado: ${ticketId}`);
         cajaActualItems = [];
@@ -341,8 +302,8 @@ function initRealtimeData() {
         const tbodyPendientes = document.getElementById("tablaConsultasPendientes");
         const tbodyReportes = document.getElementById("tablaReporteConsultas");
         
-        if (tbodyPendientes) tbodyPendientes.innerHTML = "";
-        if (tbodyReportes) tbodyReportes.innerHTML = "";
+        tbodyPendientes.innerHTML = "";
+        tbodyReportes.innerHTML = "";
 
         let countPendientes = 0;
         let totalConsultas = snapshot.size;
@@ -352,7 +313,7 @@ function initRealtimeData() {
             const c = docSnap.data();
             const docId = docSnap.id;
 
-            if (c.estado === "PENDIENTE" && tbodyPendientes) {
+            if (c.estado === "PENDIENTE") {
                 countPendientes++;
                 tbodyPendientes.innerHTML += `
                     <tr>
@@ -361,7 +322,7 @@ function initRealtimeData() {
                         <td>${c.servicio}</td>
                         <td>$${c.costo.toFixed(2)}</td>
                         <td>
-                            <button onclick="window.cargarOrdenACaja('${docId}', '${c.servicio}', '${c.paciente}', ${c.costo})" class="btn btn-sm btn-success">➕ Cargar</button>
+                            <button onclick="cargarOrdenACaja('${docId}', '${c.servicio}', '${c.paciente}', ${c.costo})" class="btn btn-sm btn-success">➕ Cargar</button>
                         </td>
                     </tr>
                 `;
@@ -369,73 +330,64 @@ function initRealtimeData() {
 
             if (c.estado === "PAGADO") totalPagadoConsultas += c.costo;
 
-            if (tbodyReportes) {
-                tbodyReportes.innerHTML += `
-                    <tr>
-                        <td>${c.fecha || 'N/A'}</td>
-                        <td><b>${c.folio}</b></td>
-                        <td>${c.paciente}</td>
-                        <td>${c.servicio}</td>
-                        <td>${c.medico}</td>
-                        <td>$${c.costo.toFixed(2)}</td>
-                        <td><b>${c.estado}</b></td>
-                    </tr>
-                `;
-            }
+            tbodyReportes.innerHTML += `
+                <tr>
+                    <td>${c.fecha || 'N/A'}</td>
+                    <td><b>${c.folio}</b></td>
+                    <td>${c.paciente}</td>
+                    <td>${c.servicio}</td>
+                    <td>${c.medico}</td>
+                    <td>$${c.costo.toFixed(2)}</td>
+                    <td><b>${c.estado}</b></td>
+                </tr>
+            `;
         });
 
-        if (countPendientes === 0 && tbodyPendientes) {
+        if (countPendientes === 0) {
             tbodyPendientes.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay consultas pendientes</td></tr>';
         }
 
-        const admTotalConsultas = document.getElementById("admTotalConsultas");
-        const admHonorarios = document.getElementById("admHonorarios");
-        if (admTotalConsultas) admTotalConsultas.innerText = totalConsultas;
-        if (admHonorarios) admHonorarios.innerText = `$${(totalPagadoConsultas * 0.7).toFixed(2)}`;
+        document.getElementById("admTotalConsultas").innerText = totalConsultas;
+        document.getElementById("admHonorarios").innerText = `$${(totalPagadoConsultas * 0.7).toFixed(2)}`;
     });
 
     onSnapshot(inventarioRef, (snapshot) => {
         const selectMed = document.getElementById("selectMedPrescription");
         const tbody = document.getElementById("tablaInventarioBody");
-        if (selectMed) selectMed.innerHTML = '<option value="">-- Seleccionar producto --</option>';
-        if (tbody) tbody.innerHTML = "";
+        selectMed.innerHTML = '<option value="">-- Seleccionar producto --</option>';
+        tbody.innerHTML = "";
 
         snapshot.forEach((docSnap) => {
             const item = { id: docSnap.id, ...docSnap.data() };
 
-            if (selectMed) {
-                selectMed.innerHTML += `
-                    <option value="${item.id}" data-nombre="${item.nombre}" data-precio="${item.precio}" data-stock="${item.stock}">
-                        ${item.nombre} - $${item.precio} (Stock: ${item.stock})
-                    </option>
-                `;
-            }
+            selectMed.innerHTML += `
+                <option value="${item.id}" data-nombre="${item.nombre}" data-precio="${item.precio}" data-stock="${item.stock}">
+                    ${item.nombre} - $${item.precio} (Stock: ${item.stock})
+                </option>
+            `;
 
-            if (tbody) {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${item.codigo || item.id}</b></td>
-                        <td>${item.nombre}</td>
-                        <td>${item.cat}</td>
-                        <td>${item.ubicacion}</td>
-                        <td>$${item.precio?.toFixed(2)}</td>
-                        <td><b>${item.stock}</b></td>
-                        <td>${item.minStock}</td>
-                        <td>${item.caducidad}</td>
-                        <td>
-                            <button onclick="window.eliminarInsumo('${item.id}')" class="btn btn-danger btn-sm">Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-            }
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${item.codigo || item.id}</b></td>
+                    <td>${item.nombre}</td>
+                    <td>${item.cat}</td>
+                    <td>${item.ubicacion}</td>
+                    <td>$${item.precio?.toFixed(2)}</td>
+                    <td><b>${item.stock}</b></td>
+                    <td>${item.minStock}</td>
+                    <td>${item.caducidad}</td>
+                    <td>
+                        <button onclick="eliminarInsumo('${item.id}')" class="btn btn-danger btn-sm">Eliminar</button>
+                    </td>
+                </tr>
+            `;
         });
     });
 
     onSnapshot(ventasRef, (snapshot) => {
         let totalVentas = 0;
         snapshot.forEach(docSnap => totalVentas += docSnap.data().total || 0);
-        const admVentasDia = document.getElementById("admVentasDia");
-        if (admVentasDia) admVentasDia.innerText = `$${totalVentas.toFixed(2)}`;
+        document.getElementById("admVentasDia").innerText = `$${totalVentas.toFixed(2)}`;
     });
 }
 
