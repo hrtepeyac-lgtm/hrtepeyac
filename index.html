@@ -18,7 +18,7 @@
     <div id="login-screen" class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <img src="logo.jpeg" alt="Hospital Rosa del Tepeyac Logo" class="login-logo">
+                <img src="ITEMS/logo.jpeg" alt="Hospital Rosa del Tepeyac Logo" class="login-logo">
                 <h2>Hospital Rosa del Tepeyac</h2>
                 <p class="text-muted text-center margin-bottom-15">Ingresa tu correo y tu contraseña</p>
             </div>
@@ -276,6 +276,41 @@
                 </div>
             </section>
 
+            <section id="ultra-mod" class="module">
+                <div class="card">
+                    <h2>Generación de Reporte de Ultrasonido y Envío</h2>
+                    <form id="formUltrasonido">
+                        <div class="grid-2">
+                            <div class="form-group"><label>Nombre del Paciente:</label><input type="text" id="ultraPaciente" required></div>
+                            <div class="form-group"><label>Edad:</label><input type="number" id="ultraEdad" required></div>
+                        </div>
+                        <div class="form-group"><label>Correo Electrónico para envío:</label><input type="email" id="ultraCorreo" required></div>
+                        <div class="form-group">
+                            <label>Diagnóstico / Texto del Reporte:</label>
+                            <textarea id="ultraTextoReporte" rows="16" required class="form-control">ULTRASONIDO OBSTETRICO
+
+SE REALIZA EL PRESENTE ESTUDIO DE ULTRASONIDO EN TIEMPO REAL UTILIZANDO TRANSDUCTOR CONVEXO DE 5 Mhz DE FRECUENCIA CON ALTA RESOLUCION EN DONDE PODEMOS OBSERVAR LOS SIGUIENTES HALLAZGOS:
+
+UTERO: AUMENTADO DE TAMAÑO DEBIDO A GESTACION CON LA PRESENCIA DE PRODUCTO UNICO VIVO, ACTIVO, UBICADO EN SITUACION LONGITUDINAL, PRESENTACION CEFALICA Y DORSO HACIA LA IZQUIERDA AL MOMENTO DEL ESTUDIO. CUENTA CON FCF RITMICA DE LATIDOS POR MINUTO SIN FENOMENOS ANORMALES VALORABLES DURANTE EL ESTUDIO. MORFOGENICAMENTE SE OBSERVA INTEGRO SIN EVIDENCIA DE MALFORMACIONES, SOMBRA GASTRICA Y VESICAL CON LLENADO Y MORFOLOGIA NORMALES. SE OBSERVA ADECUADO CIERRE DEL TUBO NEURAL. CERVIX CERRADO EN SUS 2 ORIFICIOS Y CANAL INTERNO.
+PLACENTA: DE IMPLANTACION NORMAL, DE INSERCION FUNDOCORPORAL ANTERIOR, CON GRADO DE MADUREZ SEGUN ESCALA DE GRANNUM SIN EVIDENCIA DE HEMATOMAS O DESPRENDIMIENTOS AL MOMENTO DEL ESTUDIO.
+CORDON UMBILICAL CONSTITUIDO DE 3 ESTRUCTURAS (2 ARTERIAS Y 1 VENA), NO SE IDENTIFICAN CIRCULARES AL MOMENTO DEL ESTUDIO.
+LIQUIDO AMNIOTICO: CUALITATIVAMENTE HOMOGENEO. EL VOLUMEN ES ADECUADO PARA LA EDAD GESTACIONAL.
+SOMATOMETRIA:
+DBP:       mm
+L.F.:      mm
+L.H:       mm
+P.CEF:     mm
+P.ABD:     mm
+
+IDX. EMBARAZO DE [ ] SEMANAS DE GESTACION PROMEDIO POR FETOMETRIA.
+PESO APROXIMADO: [ ] gms.</textarea>
+                        </div>
+                        <div class="form-group"><label>Imágenes de Ultrasonido (Capturas):</label><input type="file" id="ultraImagenes" multiple accept="image/*" required></div>
+                        <button type="submit" class="btn btn-primary">Generar PDF y Enviar</button>
+                    </form>
+                </div>
+            </section>
+
             <section id="adm-mod" class="module">
                 <div class="grid-3">
                     <div class="card stat-card">
@@ -405,63 +440,14 @@
                     </table>
                 </div>
             </section>
-
-            <section id="ultra-mod" class="module">
-                <div class="card">
-                    <h2>Módulo de Ultrasonido Obstetrico y Estudio Radiológico</h2>
-                    <form id="formUltrasonido">
-                        <div class="grid-3">
-                            <div class="form-group">
-                                <label>Nombre del Paciente:</label>
-                                <input type="text" id="ultraPaciente" required placeholder="Ej. María López">
-                            </div>
-                            <div class="form-group">
-                                <label>Edad:</label>
-                                <input type="number" id="ultraEdad" required placeholder="25">
-                            </div>
-                            <div class="form-group">
-                                <label>Correo del Paciente:</label>
-                                <input type="email" id="ultraCorreo" required placeholder="paciente@gmail.com">
-                            </div>
-                        </div>
-
-                        <div class="form-group margin-top-10">
-                            <label>Seleccionar Capturas de Imagen (OBS / Capturadora):</label>
-                            <input type="file" id="ultraImagenes" multiple accept="image/*">
-                        </div>
-
-                        <div class="form-group margin-top-10">
-                            <label>Texto del Reporte / Diagnóstico (Editable):</label>
-                            <textarea id="ultraTextoReporte" rows="10" style="width:100%; padding:10px; font-family:sans-serif; border:1px solid #cbd5e1; border-radius:6px;">ULTRASONIDO OBSTETRICO
-
-SE REALIZA EL PRESENTE ESTUDIO DE ULTRASONIDO EN TIEMPO REAL UTILIZANDO TRANSDUCTOR CONVEXO DE 5 MHz DE FRECUENCIA CON ALTA RESOLUCION EN DONDE PODEMOS OBSERVAR LOS SIGUIENTES HALLAZGOS:
-
-UTERO: AUMENTADO DE TAMAÑO DEBIDO A GESTACION CON LA PRESENCIA DE PRODUCTO UNICO VIVO, ACTIVO, UBICADO EN SITUACION LONGITUDINAL, PRESENTACION CEFALICA Y DORSO HACIA LA IZQUIERDA. AL MOMENTO DEL ESTUDIO, CUENTA CON FRECUENCIA RITMICA DE LATIDOS POR MINUTO SIN FENOMENOS ANORMALES VALORABLES DURANTE EL ESTUDIO. MORFOGENICAMENTE SE OBSERVA INTEGRO SIN EVIDENCIA DE MALFORMACIONES, SOMBRA GASTRICA Y VESICAL CON LLENADO Y MORFOLOGIA NORMALES. SE OBSERVA ADECUADO CIERRE DEL TUBO NEURAL. CERVIX CERRADO EN SUS 2 ORIFICIOS Y CANAL INTERNO.
-PLACENTA: DE IMPLANTACION NORMAL DE INSERCION FUNDOCORPORAL POSTERIOR, CON GRADO DE MADUREZ SEGUN ESCALA DE GRANNUM SIN EVIDENCIA DE HEMATOMAS O DESPRENDIMIENTO AL MOMENTO DEL ESTUDIO.
-CORDON UMBILICAL: CONSTITUIDO DE 3 ESTRUCTURAS (2 ARTERIAS Y 1 VENA), NO SE IDENTIFICAN CIRCULARES AL MOMENTO DEL ESTUDIO.
-LIQUIDO AMNIOTICO: CUALITATIVAMENTE HOMOGENEO. EL VOLUMEN ES ADECUADO PARA LA EDAD GESTACIONAL.
-
-SOMATOMETRIA:
-DBP: mm
-LF: mm
-LH: mm
-P.CEF: mm
-P.ABD: mm
-
-IDX: EMBARAZO DE SEMANAS DE GESTACION PROMEDIO POR FETOMETRIA.
-PESO APROXIMADO: GR.
-
-ATENTAMENTE:
-DRA. ERIKA MALDONADO
-RADIOLOGIA E IMAGEN</textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-success margin-top-15">Generar PDF y Enviar por Correo al Paciente</button>
-                    </form>
-                </div>
-            </section>
         </main>
     </div>
+
+    <script type="text/javascript">
+        (function(){
+            emailjs.init("c6Eyrm7Ga2TAudZbu"); 
+        })();
+    </script>
 
     <script type="module" src="firebase-config.js"></script>
     <script type="module" src="app.js"></script>
