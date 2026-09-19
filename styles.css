@@ -5,7 +5,6 @@
     --primary-soft: #f0f9ff;
     --bg-main: #f8fafc;
     
-    /* Modificado: Fondos claros para Header y Nav para combinar con el logo */
     --header-bg: #ffffff;
     --nav-bg: #ffffff;
     
@@ -39,6 +38,7 @@ body {
     flex-direction: column;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
 /* Pantalla de Login */
@@ -46,13 +46,14 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
+    padding: 20px;
     background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%);
 }
 
 .login-card {
     background: var(--card-bg);
-    padding: 40px;
+    padding: 30px 20px;
     border-radius: 16px;
     box-shadow: var(--shadow-lg);
     width: 100%;
@@ -70,8 +71,8 @@ body {
 }
 
 .login-logo {
-    width: 90px;
-    height: 90px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
     margin: 0 auto 12px auto;
     display: block;
@@ -91,26 +92,29 @@ body {
 header {
     background-color: var(--header-bg);
     color: var(--text-primary);
-    padding: 16px 32px;
+    padding: 16px 20px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
 }
 
 .hospital-title {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: -0.01em;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     color: #0369a1;
+    flex-wrap: wrap;
 }
 
 .header-logo {
-    height: 44px;
+    height: 38px;
     width: auto;
     object-fit: contain;
 }
@@ -118,47 +122,51 @@ header {
 .hospital-title span {
     color: var(--text-secondary);
     font-weight: 400;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
 }
 
 .user-info {
     display: flex;
     align-items: center;
-    gap: 16px;
-    font-size: 0.875rem;
+    gap: 12px;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
 }
 
 .badge-role {
     background-color: var(--primary-light);
     color: var(--primary-hover);
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 0.05em;
     border: 1px solid #bae6fd;
 }
 
-/* Navegación Blanca y Limpia */
+/* Navegación Responsiva */
 nav {
     background-color: var(--nav-bg);
     display: flex;
-    padding: 0 32px;
-    gap: 12px;
+    overflow-x: auto;
+    padding: 0 16px;
+    gap: 8px;
     border-bottom: 1px solid var(--border-color);
+    scrollbar-width: thin;
 }
 
 .tab-btn {
     background: none;
     border: none;
     color: var(--text-secondary);
-    padding: 16px 20px;
+    padding: 14px 16px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .tab-btn:hover {
@@ -174,7 +182,7 @@ nav {
 
 /* Principal y Tarjetas */
 main {
-    padding: 32px;
+    padding: 16px;
     flex-grow: 1;
     max-width: 1400px;
     margin: 0 auto;
@@ -186,22 +194,23 @@ main {
 
 .grid-2 {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
 }
 
 .grid-3 {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
 }
 
 .card {
     background-color: var(--card-bg);
     border-radius: var(--radius);
-    padding: 24px;
+    padding: 18px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
+    overflow-x: auto;
 }
 
 .stat-card {
@@ -210,30 +219,30 @@ main {
 }
 
 h2 {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
     color: #0f172a;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
+    padding-bottom: 8px;
 }
 
 h3 {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-secondary);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 /* Formularios e Inputs */
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     display: flex;
     flex-direction: column;
 }
 
 .form-group label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     margin-bottom: 6px;
     color: var(--text-secondary);
@@ -242,13 +251,14 @@ h3 {
 }
 
 input, select {
-    padding: 10px 14px;
+    padding: 10px 12px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 0.9rem;
     color: var(--text-primary);
     background-color: #ffffff;
     outline: none;
+    width: 100%;
     transition: all 0.2s ease;
 }
 
@@ -268,11 +278,11 @@ input:focus, select:focus {
     background-color: var(--primary);
     color: white;
     border: none;
-    padding: 10px 18px;
+    padding: 10px 16px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     width: 100%;
     transition: all 0.2s ease;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -292,19 +302,26 @@ input:focus, select:focus {
 .btn-secondary:hover { background-color: #475569; }
 
 .btn-auto { width: auto; }
-.btn-sm { padding: 6px 12px; font-size: 0.775rem; }
+.btn-sm { padding: 6px 10px; font-size: 0.75rem; }
 
-/* Tablas */
+/* Tablas con Scroll Responsivo */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 10px;
+}
+
 table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    margin-top: 10px;
     font-size: 0.85rem;
+    min-width: 500px;
 }
 
 th, td {
-    padding: 12px 14px;
+    padding: 10px 12px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
@@ -313,7 +330,7 @@ th {
     background-color: var(--primary-soft);
     color: #0369a1;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -326,22 +343,22 @@ tbody tr:hover {
 .ticket-box {
     border: 1px solid #bae6fd;
     background-color: var(--primary-soft);
-    padding: 20px;
+    padding: 16px;
     border-radius: 8px;
 }
 
 .placeholder-box {
     border: 2px dashed var(--border-color);
-    padding: 40px 20px;
+    padding: 30px 16px;
     text-align: center;
     color: var(--text-muted);
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .report-preview-box {
     background-color: var(--primary-soft);
-    padding: 16px;
+    padding: 14px;
     border-radius: 6px;
     border: 1px solid #bae6fd;
 }
@@ -349,21 +366,21 @@ tbody tr:hover {
 .divider {
     border: none;
     border-top: 1px dashed var(--border-color);
-    margin: 14px 0;
+    margin: 12px 0;
 }
 
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-bold { font-weight: 600; }
-.text-sm { font-size: 0.8rem; }
-.text-lg { font-size: 1.15rem; }
-.text-xl { font-size: 1.5rem; font-weight: 700; }
+.text-sm { font-size: 0.75rem; }
+.text-lg { font-size: 1.1rem; }
+.text-xl { font-size: 1.35rem; font-weight: 700; }
 .text-muted { color: var(--text-secondary); }
 .text-success { color: var(--success); }
 .text-primary { color: var(--primary); }
 .text-dark { color: var(--text-primary); }
 .text-highlight { color: var(--warning); font-weight: 700; }
-.error-msg { color: var(--danger); font-size: 0.85rem; text-align: center; font-weight: 500; }
+.error-msg { color: var(--danger); font-size: 0.8rem; text-align: center; font-weight: 500; }
 
 .margin-top-10 { margin-top: 10px; }
 .margin-top-15 { margin-top: 15px; }
@@ -371,14 +388,14 @@ tbody tr:hover {
 .margin-bottom-15 { margin-bottom: 15px; }
 
 .stat-number {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     margin: 6px 0;
     letter-spacing: -0.02em;
 }
 
 .stat-desc {
-    font-size: 0.775rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
 }
 
@@ -389,6 +406,26 @@ tbody tr:hover {
     border-radius: 6px;
     font-family: monospace;
     color: #000000;
+    word-break: break-all;
+}
+
+/* Media Queries para pantallas medianas y grandes */
+@media (min-width: 768px) {
+    main {
+        padding: 24px;
+    }
+    
+    header {
+        padding: 16px 32px;
+    }
+
+    nav {
+        padding: 0 32px;
+    }
+
+    .login-card {
+        padding: 40px;
+    }
 }
 
 @media print {
