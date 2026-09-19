@@ -410,9 +410,6 @@ async function procesarCobroFirestore() {
     }
 }
 
-// =========================================================================
-// CORRECCIÓN 1: LÓGICA DE TURNOS POR MARCAS DE TIEMPO (07:00 AM - 07:00 AM)
-// =========================================================================
 async function generarReporteContableTurno() {
     const fechaInput = document.getElementById("reporteFecha").value;
     const turno = document.getElementById("reporteTurno").value;
@@ -855,7 +852,12 @@ async function procesarUltrasonidoYEnviarCorreo(e) {
 
     for (let i = 0; i < archivos.length; i++) {
         const file = archivos[i];
-        const base64Img = await fileToBase64(file);
+        const reader = new FileReader();
+        
+        const base64Img = await new Promise((resolve) => {
+            reader.onload = (event) => resolve(event.target.result);
+            reader.readAsDataURL(file);
+        });
 
         pdf.addImage(base64Img, 'JPEG', posX, posY, anchoImg, altoImg);
         contador++;
@@ -874,8 +876,24 @@ async function procesarUltrasonidoYEnviarCorreo(e) {
         }
     }
 
+    // 1. Descarga local del PDF completo con las 6 imágenes
     pdf.save(`Ultrasonido_${paciente.replace(/\s+/g, '_')}.pdf`);
-    alert(`Reporte de Ultrasonido generado para ${paciente}. El PDF se descargó localmente. Si configuraste EmailJS, se enviará automáticamente a ${correo}.`);
+
+    // 2. Parámetros optimizados para enviar todo el texto completo por correo
+    const templateParams = {
+        to_email: correo,
+        patient_name: paciente,
+        report_text: textoReporte
+    };
+
+    try {
+        await emailjs.send("service_gsedy2r", "template_mthf6si", templateParams);
+        alert(`¡Reporte completo y texto enviado por correo a: ${correo}! El PDF con las imágenes se descargó en tu equipo.`);
+        document.getElementById("formUltrasonido").reset();
+    } catch (error) {
+        console.error("Error al enviar el correo:", error);
+        alert("El PDF se generó y descargó correctamente, pero ocurrió un problema al enviar el correo.");
+    }
 }
 
 function fileToBase64(file) {
