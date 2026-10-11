@@ -149,11 +149,34 @@ function configureUIByRole(role) {
 
 function setupEventListeners() {
     const consultaTipo = document.getElementById("consultaTipo");
-    if (consultaTipo) {
+    const medicoSelect = document.getElementById("medicoSelect");
+    const costoInput = document.getElementById("costoConsulta");
+
+    if (consultaTipo && costoInput) {
         consultaTipo.addEventListener("change", (e) => {
             const selected = e.target.options[e.target.selectedIndex];
-            const costoInput = document.getElementById("costoConsulta");
-            if (costoInput) costoInput.value = selected.getAttribute("data-costo");
+            costoInput.value = selected.getAttribute("data-costo");
+        });
+    }
+
+    if (medicoSelect && costoInput) {
+        medicoSelect.addEventListener("change", (e) => {
+            const nombre = e.target.value;
+            let costo = 600; // Costo estándar por defecto para especialistas
+
+            if (nombre.includes("Jaime Aparicio") || nombre.includes("Jorge Gómez") || nombre.includes("Victoria") || nombre.includes("Isabel Fuentes") || nombre.includes("Víctor Hugo") || nombre.includes("Aleida")) {
+                costo = 300; // Consulta General[cite: 3, 5]
+            } else if (nombre.includes("Edith Solano") || nombre.includes("Juan José Villanueva")) {
+                costo = 410; // Dental / Psicología[cite: 1, 5]
+            } else if (nombre.includes("Gisela Vargas") || nombre.includes("Óscar López")) {
+                costo = 700; // Angiología[cite: 1, 5]
+            } else if (nombre.includes("José Miguel Ramos") || nombre.includes("Miguel Soto")) {
+                costo = 760; // Neurología[cite: 1, 5]
+            } else if (nombre.includes("Evangelina Muñoz") || nombre.includes("Cindy Astrid Leal")) {
+                costo = 820; // Médico Internista y Nefrología[cite: 1, 5]
+            }
+
+            costoInput.value = costo;
         });
     }
 
@@ -534,9 +557,6 @@ async function generarReporteContableTurno() {
     }
 }
 
-// =========================================================================
-// CORRECCIÓN 2: BOLETA INEGI PEC-6-20-A (ESTRUCTURA OFICIAL MULTIPÁGINA)
-// =========================================================================
 async function generarReporteInegiPDF() {
     const periodoVal = document.getElementById("inegiPeriodo").value;
     if (!periodoVal) return alert("Seleccione un mes y año válido.");
@@ -597,7 +617,6 @@ async function generarReporteInegiPDF() {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
 
-        // PÁGINA 1: IDENTIFICACIÓN Y CONSULTA EXTERNA (CAPÍTULO I)
         pdf.setLineWidth(0.5);
         pdf.rect(10, 10, 190, 277);
 
@@ -684,7 +703,6 @@ async function generarReporteInegiPDF() {
         pdf.text("TOTAL DE CONSULTAS OTORGADAS", 14, y + 4);
         pdf.text(String(sumaTotal), 180, y + 4);
 
-        // SECCIÓN II: MORBILIDAD Y EGRESOS
         y += 14;
         pdf.line(10, y, 200, y);
         pdf.setFillColor(230, 230, 230);
@@ -699,7 +717,6 @@ async function generarReporteInegiPDF() {
         pdf.text("• Partidos / Nacimientos Atendidos: " + Math.max(1, Math.round(cGineco * 0.4)), 14, y + 5);
         pdf.text("• Intervenciones Quirúrgicas Principales: " + Math.max(1, Math.round(cCirugia * 0.8)), 14, y + 10);
 
-        // SECCIÓN III: RECURSOS HUMANOS Y MATERIALES + FIRMAS
         y += 18;
         pdf.line(10, y, 200, y);
         pdf.setFillColor(230, 230, 230);
@@ -877,33 +894,18 @@ async function procesarUltrasonidoYEnviarCorreo(e) {
             }
         }
 
-        // 1. Descarga inmediata del PDF en la computadora
         pdf.save(`Ultrasonido_${paciente.replace(/\s+/g, '_')}.pdf`);
-
-        // 2. Copiar el diagnóstico al portapapeles de manera silenciosa
         navigator.clipboard.writeText(textoReporte);
 
-        // 3. Abrir el cliente de correo de forma instantánea sin alertas de por medio
         const asunto = encodeURIComponent(`Resultados de Ultrasonido - Hospital Rosa del Tepeyac`);
         const cuerpo = encodeURIComponent(`Estimado/a ${paciente},\n\nA continuación le hacemos llegar su reporte médico adjunto.\n\n(El texto del diagnóstico se ha copiado automáticamente, solo presione Ctrl+V para pegarlo):\n\n${textoReporte}`);
         
         window.location.href = `mailto:${correo}?subject=${asunto}&body=${cuerpo}`;
-
-        // Limpiar formulario de inmediato
         document.getElementById("formUltrasonido").reset();
 
     } catch (error) {
         console.error("Error al procesar el reporte:", error);
     }
-}
-
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
 }
 
 function initRealtimeData() {
