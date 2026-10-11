@@ -827,8 +827,6 @@ async function procesarUltrasonidoYEnviarCorreo(e) {
         return alert("Por favor seleccione al menos una captura de imagen de ultrasonido.");
     }
 
-    alert("Generando PDF local y preparando correo con imágenes adjuntas...");
-
     try {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
@@ -853,8 +851,6 @@ async function procesarUltrasonidoYEnviarCorreo(e) {
         let altoImg = 60;
         let contador = 0;
 
-        const attachments = [];
-
         for (let i = 0; i < archivos.length; i++) {
             const file = archivos[i];
             const reader = new FileReader();
@@ -862,12 +858,6 @@ async function procesarUltrasonidoYEnviarCorreo(e) {
             const base64Img = await new Promise((resolve) => {
                 reader.onload = (event) => resolve(event.target.result);
                 reader.readAsDataURL(file);
-            });
-
-            const base64Content = base64Img.split(",")[1];
-            attachments.push({
-                filename: `ultrasound_imagen_${i + 1}.jpg`,
-                content: base64Content
             });
 
             pdf.addImage(base64Img, 'JPEG', posX, posY, anchoImg, altoImg);
@@ -887,50 +877,23 @@ async function procesarUltrasonidoYEnviarCorreo(e) {
             }
         }
 
+        // 1. Descarga inmediata del PDF en la computadora
         pdf.save(`Ultrasonido_${paciente.replace(/\s+/g, '_')}.pdf`);
 
-        const emailPayload = {
-            from: "Hospital Rosa del Tepeyac <onboarding@resend.dev>",
-            to: [correo],
-            subject: `Resultados de Ultrasonido - ${paciente}`,
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; background: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0;">
-                    <h2 style="color: #004d40; text-align: center; margin-top: 0;">Hospital Rosa del Tepeyac</h2>
-                    <p style="color: #333;">Estimado/a <strong>${paciente}</strong>,</p>
-                    <p style="color: #555; line-height: 1.5;">Adjunto a este correo encontrará las capturas de su estudio de ultrasonido en alta definición, así como el dictamen emitido por la doctora tratante.</p>
-                    
-                    <div style="background: #f9fbfb; border-left: 4px solid #00796b; padding: 15px; margin: 20px 0; color: #2c3e50; line-height: 1.6; font-size: 14px;">
-                        <strong>Diagnóstico Médico:</strong><br>${textoReporte.replace(/\n/g, '<br>')}
-                    </div>
+        // 2. Copiar el diagnóstico al portapapeles de manera silenciosa
+        navigator.clipboard.writeText(textoReporte);
 
-                    <p style="color: #666; font-size: 12px; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
-                        Hospital Rosa del Tepeyac - Sistema Automatizado de Resultados Médicos
-                    </p>
-                </div>
-            `,
-            attachments: attachments
-        };
+        // 3. Abrir el cliente de correo de forma instantánea sin alertas de por medio
+        const asunto = encodeURIComponent(`Resultados de Ultrasonido - Hospital Rosa del Tepeyac`);
+        const cuerpo = encodeURIComponent(`Estimado/a ${paciente},\n\nA continuación le hacemos llegar su reporte médico adjunto.\n\n(El texto del diagnóstico se ha copiado automáticamente, solo presione Ctrl+V para pegarlo):\n\n${textoReporte}`);
+        
+        window.location.href = `mailto:${correo}?subject=${asunto}&body=${cuerpo}`;
 
-        const response = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer re_aRUG2SaT_5bAg6dEqwzBhbR6WaMVkL5V"
-            },
-            body: JSON.stringify(emailPayload)
-        });
-
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || "Error al enviar el correo a través de la API.");
-        }
-
-        alert(`¡Correo enviado con éxito a ${correo} con las 6 imágenes adjuntas! El PDF también se descargó en tu equipo.`);
+        // Limpiar formulario de inmediato
         document.getElementById("formUltrasonido").reset();
 
     } catch (error) {
-        console.error("Error al procesar el envío:", error);
-        alert("Ocurrió un problema al enviar el correo: " + error.message);
+        console.error("Error al procesar el reporte:", error);
     }
 }
 
