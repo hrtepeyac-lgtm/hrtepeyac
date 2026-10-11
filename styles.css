@@ -100,17 +100,17 @@ header {
 }
 
 .hospital-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     color: #0369a1;
     text-align: center;
 }
 
 .header-logo {
-    height: 40px;
+    height: 36px;
     width: auto;
     object-fit: contain;
 }
@@ -118,7 +118,7 @@ header {
 .hospital-title span {
     color: var(--text-secondary);
     font-weight: 400;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .user-info {
@@ -126,8 +126,8 @@ header {
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    font-size: 0.85rem;
+    gap: 8px;
+    font-size: 0.8rem;
     width: 100%;
 }
 
@@ -148,17 +148,18 @@ header {
     border: 1px solid #bae6fd;
 }
 
-/* Navegación por pestañas deslizable en móvil */
+/* Navegación por pestañas deslizable y cómoda en móvil */
 nav {
     background-color: var(--nav-bg);
     display: flex;
     overflow-x: auto;
-    padding: 4px 12px;
-    gap: 8px;
+    padding: 6px 12px;
+    gap: 6px;
     border-bottom: 1px solid var(--border-color);
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
     width: 100%;
+    scrollbar-width: thin;
 }
 
 @media (min-width: 768px) {
@@ -173,12 +174,13 @@ nav {
     background: none;
     border: none;
     color: var(--text-secondary);
-    padding: 12px 16px;
+    padding: 10px 14px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .tab-btn:hover {
@@ -245,7 +247,6 @@ main {
     }
 }
 
-/* Adaptación para pantallas pequeñas en grids de 3 columnas */
 @media (max-width: 767px) {
     .grid-3 {
         grid-template-columns: 1fr !important;
@@ -297,7 +298,7 @@ h3 {
     margin-bottom: 8px;
 }
 
-/* Formularios adaptados */
+/* Formularios y campos adaptados */
 .form-group {
     margin-bottom: 14px;
     display: flex;
@@ -319,7 +320,7 @@ input, select, textarea {
     padding: 10px 12px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    font-size: 16px; /* Evita zoom automático no deseado en dispositivos móviles */
+    font-size: 16px; /* Impide zoom automático en iOS */
     color: var(--text-primary);
     background-color: #ffffff;
     outline: none;
@@ -354,20 +355,18 @@ input:focus, select:focus, textarea:focus {
 
 .btn:hover { background-color: var(--primary-hover); }
 .btn-success { background-color: var(--success); }
-.btn-success:hover { background-color: #059669; }
 .btn-danger { background-color: var(--danger); }
-.btn-danger:hover { background-color: #dc2626; }
 .btn-secondary { background-color: #64748b; }
-.btn-secondary:hover { background-color: #475569; }
 .btn-auto { width: auto; }
 .btn-sm { padding: 6px 10px; font-size: 0.75rem; min-height: auto; width: auto; }
 
-/* Contenedores para tablas responsivas sin desbordamiento */
+/* Contenedores responsivos para tablas (evita recortes y desbordes) */
 .table-responsive {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     margin-top: 10px;
+    margin-bottom: 10px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: #fff;
@@ -398,7 +397,7 @@ tbody tr:hover {
     background-color: #f8fafc;
 }
 
-/* Badges y Etiquetas de Especialidades */
+/* Badges */
 .badge-general { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
 .badge-especialidad { background-color: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
 .badge-dental-psico { background-color: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
