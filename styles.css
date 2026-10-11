@@ -3,25 +3,20 @@
     --primary-hover: #0369a1;
     --primary-light: #e0f2fe;
     --primary-soft: #f0f9ff;
-    --bg-main: #f1f5f9;
-    
+    --bg-main: #f8fafc;
     --header-bg: #ffffff;
     --nav-bg: #ffffff;
-    
     --card-bg: #ffffff;
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #94a3b8;
-    --border-color: #cbd5e1;
+    --border-color: #e2e8f0;
     --success: #10b981;
-    --success-hover: #059669;
     --danger: #ef4444;
-    --danger-hover: #dc2626;
     --warning: #f59e0b;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-    --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.1);
-    --radius: 12px;
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+    --radius: 10px;
 }
 
 * {
@@ -29,7 +24,6 @@
     margin: 0;
     padding: 0;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -38,25 +32,25 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
+    width: 100%;
     overflow-x: hidden;
 }
 
-/* Pantalla de Login Ultra-Responsiva */
+/* Pantalla de Login */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     padding: 16px;
-    background: linear-gradient(135deg, #bae6fd 0%, #f1f5f9 100%);
+    background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%);
 }
 
 .login-card {
     background: var(--card-bg);
-    padding: 24px 20px;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
     width: 100%;
     max-width: 400px;
     border: 1px solid var(--border-color);
@@ -71,8 +65,8 @@ body {
 }
 
 .login-logo {
-    width: 75px;
-    height: 75px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
     margin-bottom: 10px;
 }
@@ -82,45 +76,41 @@ body {
     font-weight: 700;
     border: none;
     padding: 0;
-    margin-bottom: 4px;
 }
 
-/* Header principal adaptativo para móviles */
+/* Header principal adaptable */
 header {
     background-color: var(--header-bg);
-    color: var(--text-primary);
-    padding: 12px;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    width: 100%;
 }
 
 @media (min-width: 768px) {
     header {
         flex-direction: row;
-        padding: 14px 28px;
         justify-content: space-between;
+        padding: 16px 32px;
     }
 }
 
 .hospital-title {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     color: #0369a1;
     text-align: center;
 }
 
 .header-logo {
-    height: 36px;
+    height: 40px;
     width: auto;
     object-fit: contain;
 }
@@ -128,14 +118,7 @@ header {
 .hospital-title span {
     color: var(--text-secondary);
     font-weight: 400;
-    font-size: 0.8rem;
-    display: none; /* Se oculta en móviles muy pequeños para ganar espacio */
-}
-
-@media (min-width: 480px) {
-    .hospital-title span {
-        display: inline;
-    }
+    font-size: 0.9rem;
 }
 
 .user-info {
@@ -143,8 +126,8 @@ header {
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
+    gap: 10px;
+    font-size: 0.85rem;
     width: 100%;
 }
 
@@ -157,30 +140,30 @@ header {
 .badge-role {
     background-color: var(--primary-light);
     color: var(--primary-hover);
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.68rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
     text-transform: uppercase;
     font-weight: 700;
     border: 1px solid #bae6fd;
 }
 
-/* Navegación tipo App Bar inferior o superior deslizante */
+/* Navegación por pestañas deslizable en móvil */
 nav {
     background-color: var(--nav-bg);
     display: flex;
     overflow-x: auto;
     padding: 4px 12px;
-    gap: 6px;
+    gap: 8px;
     border-bottom: 1px solid var(--border-color);
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
-    box-shadow: inset 0 -2px 4px rgba(0,0,0,0.02);
+    width: 100%;
 }
 
 @media (min-width: 768px) {
     nav {
-        padding: 0 28px;
+        padding: 0 32px;
         gap: 12px;
         overflow-x: visible;
     }
@@ -190,13 +173,12 @@ nav {
     background: none;
     border: none;
     color: var(--text-secondary);
-    padding: 10px 14px;
+    padding: 12px 16px;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 600;
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
-    border-radius: 6px 6px 0 0;
 }
 
 .tab-btn:hover {
@@ -216,48 +198,50 @@ nav {
     }
 }
 
-/* Contenedor principal adaptable */
+/* Contenedor principal */
 main {
     padding: 12px;
-    flex-grow: 1;
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
-    width: 100%;
+    flex-grow: 1;
 }
 
 @media (min-width: 768px) {
     main {
-        padding: 24px;
+        padding: 32px;
     }
 }
 
 .module { display: none; }
 .module.active { display: block; }
 
-/* Grids 100% adaptativos */
+/* Grids 100% responsivos */
 .grid-2 {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 16px;
+    width: 100%;
 }
 
 @media (min-width: 900px) {
     .grid-2 {
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        gap: 24px;
     }
 }
 
 .grid-3 {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 16px;
+    width: 100%;
 }
 
 @media (min-width: 768px) {
     .grid-3 {
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
+        gap: 24px;
     }
 }
 
@@ -267,12 +251,14 @@ main {
     padding: 16px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
-    margin-bottom: 14px;
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 16px;
 }
 
 @media (min-width: 768px) {
     .card {
-        padding: 22px;
+        padding: 24px;
         margin-bottom: 0;
     }
 }
@@ -283,52 +269,51 @@ main {
 }
 
 h2 {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     color: #0f172a;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 8px;
 }
 
 h3 {
-    font-size: 0.88rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-secondary);
     margin-bottom: 8px;
 }
 
-/* Formularios adaptados para touch en celulares */
+/* Formularios adaptados */
 .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
 .form-group label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-bottom: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 5px;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.03em;
 }
 
 input, select, textarea {
     width: 100%;
-    padding: 11px 12px;
+    padding: 10px 12px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 16px; /* Tamaño clave para evitar zoom automático en iOS/Safari */
+    border-radius: 6px;
+    font-size: 16px; /* Evita zoom automático en iPhone */
     color: var(--text-primary);
     background-color: #ffffff;
     outline: none;
-    transition: all 0.2s ease;
 }
 
 input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
 .input-readonly {
@@ -337,58 +322,43 @@ input:focus, select:focus, textarea:focus {
     cursor: not-allowed;
 }
 
-/* Botones amplios aptos para pantalla táctil */
+/* Botones */
 .btn {
     background-color: var(--primary);
     color: white;
     border: none;
     padding: 12px 16px;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9rem;
     width: 100%;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
     text-align: center;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 44px; /* Estándar táctil recomendado por Apple/Google */
+    min-height: 44px;
 }
 
-.btn:hover {
-    background-color: var(--primary-hover);
-}
-
+.btn:hover { background-color: var(--primary-hover); }
 .btn-success { background-color: var(--success); }
-.btn-success:hover { background-color: var(--success-hover); }
-
 .btn-danger { background-color: var(--danger); }
-.btn-danger:hover { background-color: var(--danger-hover); }
-
 .btn-secondary { background-color: #64748b; }
-.btn-secondary:hover { background-color: #475569; }
-
 .btn-auto { width: auto; }
-.btn-sm { padding: 6px 10px; font-size: 0.75rem; min-height: 32px; width: auto; }
+.btn-sm { padding: 6px 10px; font-size: 0.75rem; min-height: auto; width: auto; }
 
-/* Contenedor de tablas responsivo optimizado con scroll táctil suave */
+/* Tablas con desplazamiento horizontal fluido en móvil */
 .table-responsive {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    margin-top: 8px;
+    margin-top: 10px;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 6px;
     background: #fff;
 }
 
 table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 0.82rem;
+    border-collapse: collapse;
+    font-size: 0.8rem;
     white-space: nowrap;
 }
 
@@ -404,7 +374,6 @@ th {
     font-weight: 700;
     font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
 }
 
 tbody tr:hover {
@@ -412,32 +381,31 @@ tbody tr:hover {
 }
 
 /* Badges de Especialidades */
-.badge-general { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 3px 7px; border-radius: 6px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
-.badge-especialidad { background-color: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; padding: 3px 7px; border-radius: 6px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
-.badge-dental-psico { background-color: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; padding: 3px 7px; border-radius: 6px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
-.badge-urgencias { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 3px 7px; border-radius: 6px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
+.badge-general { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
+.badge-especialidad { background-color: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
+.badge-dental-psico { background-color: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
+.badge-urgencias { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 3px 6px; border-radius: 4px; font-weight: 600; font-size: 0.7rem; display: inline-block; }
 
-/* Cajas y Utilidades Móviles */
 .ticket-box {
     border: 1px solid #bae6fd;
     background-color: var(--primary-soft);
-    padding: 14px;
+    padding: 16px;
     border-radius: 8px;
     word-break: break-word;
 }
 
 .placeholder-box {
     border: 2px dashed var(--border-color);
-    padding: 24px 12px;
+    padding: 30px 15px;
     text-align: center;
     color: var(--text-muted);
     border-radius: 8px;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
 }
 
 .report-preview-box {
     background-color: var(--primary-soft);
-    padding: 12px;
+    padding: 14px;
     border-radius: 6px;
     border: 1px solid #bae6fd;
 }
@@ -445,21 +413,21 @@ tbody tr:hover {
 .divider {
     border: none;
     border-top: 1px dashed var(--border-color);
-    margin: 10px 0;
+    margin: 12px 0;
 }
 
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-bold { font-weight: 600; }
-.text-sm { font-size: 0.76rem; }
-.text-lg { font-size: 1.05rem; }
-.text-xl { font-size: 1.3rem; font-weight: 700; }
+.text-sm { font-size: 0.78rem; }
+.text-lg { font-size: 1.1rem; }
+.text-xl { font-size: 1.35rem; font-weight: 700; }
 .text-muted { color: var(--text-secondary); }
 .text-success { color: var(--success); }
 .text-primary { color: var(--primary); }
 .text-dark { color: var(--text-primary); }
 .text-highlight { color: var(--warning); font-weight: 700; }
-.error-msg { color: var(--danger); font-size: 0.8rem; text-align: center; font-weight: 500; }
+.error-msg { color: var(--danger); font-size: 0.82rem; text-align: center; font-weight: 500; }
 
 .margin-top-10 { margin-top: 10px; }
 .margin-top-15 { margin-top: 15px; }
@@ -467,20 +435,19 @@ tbody tr:hover {
 .margin-bottom-15 { margin-bottom: 15px; }
 
 .stat-number {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
     margin: 4px 0;
-    letter-spacing: -0.02em;
 }
 
 .stat-desc {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
 }
 
 .printable-ticket {
     background: #ffffff;
-    padding: 8px;
+    padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-family: monospace;
@@ -488,18 +455,9 @@ tbody tr:hover {
 }
 
 @media print {
-    body * {
-        visibility: hidden !important;
-    }
-
-    .no-print {
-        display: none !important;
-    }
-
-    #printableTicketArea, #printableTicketArea * {
-        visibility: visible !important;
-    }
-
+    body * { visibility: hidden !important; }
+    .no-print { display: none !important; }
+    #printableTicketArea, #printableTicketArea * { visibility: visible !important; }
     #printableTicketArea {
         position: absolute !important;
         left: 0 !important;
@@ -507,15 +465,7 @@ tbody tr:hover {
         width: 80mm !important;
         margin: 0 !important;
         padding: 5px !important;
-        border: none !important;
-        box-shadow: none !important;
-        font-size: 11px !important;
-        color: #000 !important;
         background: #fff !important;
     }
-
-    @page {
-        size: 80mm auto;
-        margin: 0mm;
-    }
+    @page { size: 80mm auto; margin: 0mm; }
 }
